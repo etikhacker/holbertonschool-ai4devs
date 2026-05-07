@@ -9,15 +9,10 @@ Issue type:
 Off-by-one error / IndexError
 
 Explanation:
-The loop uses len(items) + 1, which causes the code to access
-items[len(items)], an invalid index. This produces an IndexError.
+The loop uses len(items) + 1, which accesses an invalid index and causes an IndexError.
 
 Fix:
-Change:
-for i in range(len(items) - n, len(items) + 1)
-
-To:
-for i in range(len(items) - n, len(items))
+Replace len(items) + 1 with len(items).
 
 
 FILE: bug2.py
@@ -25,22 +20,16 @@ FILE: bug2.py
 Bug 2 – bug2.py
 
 Intended behavior:
-Calculate the average of all positive numbers in a list.
+Calculate the average of positive numbers in a list.
 
 Issue type:
 Logical error
 
 Explanation:
-The variable count is assigned len(numbers), which counts all
-elements in the list instead of only positive numbers.
-This gives an incorrect average.
+The program counts all elements in the list instead of counting only positive numbers, which produces an incorrect average.
 
 Fix:
-Change:
-count = len(numbers)
-
-To:
-count += 1
+Replace count = len(numbers) with count += 1.
 
 
 FILE: bug3.js
@@ -48,53 +37,31 @@ FILE: bug3.js
 Bug 3 – bug3.js
 
 Intended behavior:
-Multiply every number in an array and return the product.
+Multiply all numbers in an array and return the product.
 
 Issue type:
-Incorrect initialization and out-of-bounds loop
+Incorrect initialization and loop boundary error
 
 Explanation:
-The product variable starts at 0, but multiplication should start
-with 1 because 1 is the identity value for multiplication.
-
-The loop condition uses <= arr.length, which accesses an undefined
-element at the end of the array.
+The variable product starts at 0 instead of 1. The loop also uses <=, which accesses an invalid array index.
 
 Fix:
-Change:
-let product = 0;
-
-To:
-let product = 1;
-
-Change:
-for (let i = 0; i <= arr.length; i++)
-
-To:
-for (let i = 0; i < arr.length; i++)
-
-Also change:
-product = arr[i];
-
-To:
-product *= arr[i];
+Initialize product with 1 and replace <= with < in the loop condition.
 
 
-Second Bug – Type Misuse
+Second Bug – bug3.js
 
 Intended behavior:
-Sum all items in an array numerically.
+Add all array items numerically.
 
 Issue type:
-Type coercion / String concatenation
+Type coercion
 
 Explanation:
-The array contains a string value ("2"), so JavaScript performs
-string concatenation instead of numeric addition.
+A string value inside the array causes string concatenation instead of numeric addition.
 
 Fix:
-Convert values to numbers before addition:
-return items.reduce((acc, val) => acc + Number(val), 0);
+Convert values to numbers before addition.
 
 
 FILE: bug4.js
@@ -108,17 +75,10 @@ Issue type:
 Missing await in asynchronous code
 
 Explanation:
-getUser(id) returns a Promise, but the code tries to access
-user.name before the Promise is resolved.
-As a result, undefined is printed.
+The function getUser() returns a Promise, but the code tries to access the result before the Promise is resolved.
 
 Fix:
-Use async/await:
-
-async function printUser(id) {
-    const user = await getUser(id);
-    console.log(`User name: ${user.name}`);
-}
+Use async/await when calling getUser().
 
 
 FILE: bug5.cpp
@@ -132,27 +92,10 @@ Issue type:
 Off-by-one error and syntax error
 
 Explanation:
-The code accesses arr[size - i], which is outside the valid array
-range. Array indices go from 0 to size - 1.
-
-There is also a missing semicolon after calculating the array size,
-which causes a compilation error.
+The code accesses arr[size - i], which is outside the valid array range. There is also a missing semicolon after the size calculation.
 
 Fix:
-Change:
-arr[i] = arr[size - i];
-
-To:
-arr[i] = arr[size - 1 - i];
-
-Change:
-arr[size - i] = temp;
-
-To:
-arr[size - 1 - i] = temp;
-
-Add missing semicolon:
-int size = sizeof(nums) / sizeof(nums[0]);
+Replace arr[size - i] with arr[size - 1 - i] and add the missing semicolon.
 
 
 FILE: bug6.py
@@ -160,30 +103,13 @@ FILE: bug6.py
 Bug 6 – bug6.py
 
 Intended behavior:
-Count word frequency in a sentence and return the top-N words.
+Count word frequencies and return the top-N words.
 
 Issue type:
 KeyError and TypeError
 
 Explanation:
-The line:
-freq[word] = freq[word] + 1
-
-causes a KeyError when a word appears for the first time because
-the dictionary key does not yet exist.
-
-The second bug happens because string multiplication expects an
-integer, but a float value is passed instead.
+The dictionary key may not exist when a word appears for the first time. A float value is also used where an integer is expected for string multiplication.
 
 Fix:
-Change:
-freq[word] = freq[word] + 1
-
-To:
-freq[word] = freq.get(word, 0) + 1
-
-Also change:
-times = 3.0
-
-To:
-times = 3
+Use freq.get(word, 0) + 1 and replace the float value with an integer.
