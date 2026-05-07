@@ -1,115 +1,106 @@
-FILE: bug1.py
+# Bug Descriptions
 
-Bug 1 – bug1.py
+---
 
-Intended behavior:
+## Bug 1 – bug1.py
+
+### Intended behavior
 Return the last n items from a list.
 
-Issue type:
+### Issue type
 Off-by-one error / IndexError
 
-Explanation:
-The loop uses len(items) + 1, which accesses an invalid index and causes an IndexError.
+### Explanation
+The loop uses `len(items) + 1`, which causes the program to access an invalid list index. This results in an `IndexError`.
 
-Fix:
-Replace len(items) + 1 with len(items).
+### Fix
+Replace `len(items) + 1` with `len(items)` in the loop range.
 
+---
 
-FILE: bug2.py
+## Bug 2 – bug2.py
 
-Bug 2 – bug2.py
-
-Intended behavior:
+### Intended behavior
 Calculate the average of positive numbers in a list.
 
-Issue type:
+### Issue type
 Logical error
 
-Explanation:
-The program counts all elements in the list instead of counting only positive numbers, which produces an incorrect average.
+### Explanation
+The program counts all elements in the list instead of counting only positive numbers. Because of this, the average is calculated incorrectly.
 
-Fix:
-Replace count = len(numbers) with count += 1.
+### Fix
+Replace `count = len(numbers)` with `count += 1`.
 
+---
 
-FILE: bug3.js
+## Bug 3 – bug3.js
 
-Bug 3 – bug3.js
-
-Intended behavior:
+### Intended behavior
 Multiply all numbers in an array and return the product.
 
-Issue type:
+### Issue type
 Incorrect initialization and loop boundary error
 
-Explanation:
-The variable product starts at 0 instead of 1. The loop also uses <=, which accesses an invalid array index.
+### Explanation
+The variable `product` starts at `0` instead of `1`. The loop also uses `<=`, which accesses an invalid array index.
 
-Fix:
-Initialize product with 1 and replace <= with < in the loop condition.
+### Fix
+Initialize `product` with `1` and replace `<=` with `<` in the loop condition.
 
-
-Second Bug – bug3.js
-
-Intended behavior:
-Add all array items numerically.
-
-Issue type:
+### Second issue type
 Type coercion
 
-Explanation:
+### Second explanation
 A string value inside the array causes string concatenation instead of numeric addition.
 
-Fix:
-Convert values to numbers before addition.
+### Second fix
+Convert all values to numbers before addition.
 
+---
 
-FILE: bug4.js
+## Bug 4 – bug4.js
 
-Bug 4 – bug4.js
-
-Intended behavior:
+### Intended behavior
 Fetch user data and print the username.
 
-Issue type:
+### Issue type
 Missing await in asynchronous code
 
-Explanation:
-The function getUser() returns a Promise, but the code tries to access the result before the Promise is resolved.
+### Explanation
+`getUser()` returns a Promise, but the code tries to use the result before the Promise is resolved.
 
-Fix:
-Use async/await when calling getUser().
+### Fix
+Use `async/await` when calling `getUser()`.
 
+---
 
-FILE: bug5.cpp
+## Bug 5 – bug5.cpp
 
-Bug 5 – bug5.cpp
-
-Intended behavior:
+### Intended behavior
 Reverse an array in-place and print it.
 
-Issue type:
+### Issue type
 Off-by-one error and syntax error
 
-Explanation:
-The code accesses arr[size - i], which is outside the valid array range. There is also a missing semicolon after the size calculation.
+### Explanation
+The code accesses `arr[size - i]`, which is outside the valid array range. There is also a missing semicolon after the size calculation.
 
-Fix:
-Replace arr[size - i] with arr[size - 1 - i] and add the missing semicolon.
+### Fix
+Replace `arr[size - i]` with `arr[size - 1 - i]` and add the missing semicolon.
 
+---
 
-FILE: bug6.py
+## Bug 6 – bug6.py
 
-Bug 6 – bug6.py
-
-Intended behavior:
+### Intended behavior
 Count word frequencies and return the top-N words.
 
-Issue type:
+### Issue type
 KeyError and TypeError
 
-Explanation:
+### Explanation
 The dictionary key may not exist when a word appears for the first time. A float value is also used where an integer is expected for string multiplication.
 
-Fix:
-Use freq.get(word, 0) + 1 and replace the float value with an integer.
+### Fix
+Use `freq.get(word, 0) + 1` and replace the float value with an integer.
