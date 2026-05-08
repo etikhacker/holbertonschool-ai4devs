@@ -2,7 +2,9 @@
 
 ---
 
-## Bug 1 – bug1.py
+# FILE: bug1.py
+
+## Bug 1
 
 ### Intended Behavior
 The function should return the last `n` elements from a list without accessing invalid indexes.
@@ -11,30 +13,34 @@ The function should return the last `n` elements from a list without accessing i
 Off-by-one error / IndexError
 
 ### Explanation
-The loop uses `len(items) + 1`, which causes the code to access an invalid index outside the list range.
+The loop uses `len(items) + 1`, which causes an invalid index access.
 
 ### Recommended Fix
 Replace `len(items) + 1` with `len(items)`.
 
 ---
 
-## Bug 2 – bug2.py
+# FILE: bug2.py
+
+## Bug 2
 
 ### Intended Behavior
-The function should calculate the average of only positive numbers in the list.
+The function should calculate the average of only positive numbers.
 
 ### Issue Type
 Logical error
 
 ### Explanation
-The program counts all elements instead of counting only positive numbers, which produces an incorrect average result.
+The program counts all elements instead of only positive numbers.
 
 ### Recommended Fix
 Replace `count = len(numbers)` with `count += 1`.
 
 ---
 
-## Bug 3 – bug3.js
+# FILE: bug3.js
+
+## Bug 3
 
 ### Intended Behavior
 The function should multiply all numbers in an array and return the correct product.
@@ -43,46 +49,52 @@ The function should multiply all numbers in an array and return the correct prod
 Incorrect initialization and loop boundary error
 
 ### Explanation
-The variable `product` starts at `0` instead of `1`. The loop also accesses an invalid array index because it uses `<=`.
+The variable `product` starts at `0` instead of `1`. The loop also accesses an invalid index.
 
 ### Recommended Fix
 Initialize `product` with `1` and replace `<=` with `<`.
 
 ---
 
-## Bug 4 – bug3.js
+# FILE: bug3.js
+
+## Bug 4
 
 ### Intended Behavior
-The function should add all array values numerically and return the correct sum.
+The function should add all array values numerically.
 
 ### Issue Type
 Type coercion
 
 ### Explanation
-A string value inside the array causes string concatenation instead of numeric addition.
+A string value causes concatenation instead of numeric addition.
 
 ### Recommended Fix
-Convert all values to numbers before addition.
+Convert values to numbers before addition.
 
 ---
 
-## Bug 5 – bug4.js
+# FILE: bug4.js
+
+## Bug 5
 
 ### Intended Behavior
-The function should fetch user data asynchronously and correctly display the username.
+The function should fetch user data asynchronously and display the username correctly.
 
 ### Issue Type
 Missing await in asynchronous code
 
 ### Explanation
-The Promise returned by `getUser()` is accessed before it resolves.
+The Promise is accessed before it resolves.
 
 ### Recommended Fix
-Use `async/await` when calling `getUser()`.
+Use `async/await`.
 
 ---
 
-## Bug 6 – bug5.cpp
+# FILE: bug5.cpp
+
+## Bug 6
 
 ### Intended Behavior
 The function should reverse an array in-place and print the reversed result correctly.
@@ -91,39 +103,43 @@ The function should reverse an array in-place and print the reversed result corr
 Off-by-one error and syntax error
 
 ### Explanation
-The code accesses an invalid array index using `arr[size - i]`. The program also contains a missing semicolon.
+The code accesses an invalid array index and also contains a missing semicolon.
 
 ### Recommended Fix
-Replace `arr[size - i]` with `arr[size - 1 - i]` and add the missing semicolon.
+Use `size - 1 - i` and add the missing semicolon.
 
 ---
 
-## Bug 7 – bug6.py
+# FILE: bug6.py
+
+## Bug 7
 
 ### Intended Behavior
-The function should count word frequencies correctly and return the most common words.
+The function should count word frequencies correctly.
 
 ### Issue Type
 KeyError
 
 ### Explanation
-The dictionary key may not exist when a word appears for the first time.
+The dictionary key may not exist during the first occurrence of a word.
 
 ### Recommended Fix
 Use `freq.get(word, 0) + 1`.
 
 ---
 
-## Bug 8 – bug6.py
+# FILE: bug6.py
+
+## Bug 8
 
 ### Intended Behavior
-The function should multiply a string using a valid integer value.
+The function should multiply strings using an integer value.
 
 ### Issue Type
 TypeError
 
 ### Explanation
-A float value is used where an integer is required for string multiplication.
+A float value is used instead of an integer.
 
 ### Recommended Fix
 Replace the float value with an integer.
