@@ -5,70 +5,73 @@
 ## Bug 1 – bug1.py
 
 ### Intended Behavior
-Return the last n items from a list.
+The function should return the last `n` elements from a list without causing index errors.
 
 ### Issue Type
 Off-by-one error / IndexError
 
 ### Explanation
-The loop uses `len(items) + 1`, which accesses an invalid index and causes an `IndexError`.
+The loop uses `len(items) + 1`, which makes the code access an index outside the valid list range.
 
 ### Recommended Fix
-Replace `len(items) + 1` with `len(items)`.
+Replace `len(items) + 1` with `len(items)` in the loop range.
 
 ---
 
 ## Bug 2 – bug2.py
 
 ### Intended Behavior
-Calculate the average of positive numbers in a list.
+The function should calculate the average value of only positive numbers in the list.
 
 ### Issue Type
 Logical error
 
 ### Explanation
-The program counts all list elements instead of counting only positive numbers.
+The code counts all elements in the list instead of counting only positive numbers, which produces an incorrect average.
 
 ### Recommended Fix
-Replace `count = len(numbers)` with `count += 1`.
+Replace `count = len(numbers)` with `count += 1` inside the positive number condition.
 
 ---
 
 ## Bug 3 – bug3.js
 
 ### Intended Behavior
-Multiply all numbers in an array and return the product.
+The function should multiply all numbers in an array and return the final product.
 
 ### Issue Type
 Incorrect initialization and loop boundary error
 
 ### Explanation
-The product variable starts at `0` instead of `1`. The loop also accesses an invalid array index because it uses `<=`.
+The variable `product` starts at `0` instead of `1`. The loop condition also accesses an invalid array index because it uses `<=`.
 
 ### Recommended Fix
 Initialize `product` with `1` and replace `<=` with `<`.
+
+### Second Intended Behavior
+The function should add all array elements as numeric values.
 
 ### Second Issue Type
 Type coercion
 
 ### Second Explanation
-A string inside the array causes string concatenation instead of numeric addition.
+A string value inside the array causes JavaScript to perform string concatenation instead of arithmetic addition.
 
 ### Second Recommended Fix
-Convert values to numbers before addition.
+Convert array values to numbers before performing addition.
 
 ---
 
 ## Bug 4 – bug4.js
 
 ### Intended Behavior
-Fetch user data and print the username.
+The function should retrieve user data asynchronously and correctly display the user's name.
 
 ### Issue Type
 Missing await in asynchronous code
 
 ### Explanation
-The Promise returned by `getUser()` is used before it is resolved.
+The Promise returned by `getUser()` is used before it finishes resolving.
 
 ### Recommended Fix
 Use `async/await` when calling `getUser()`.
@@ -78,29 +81,29 @@ Use `async/await` when calling `getUser()`.
 ## Bug 5 – bug5.cpp
 
 ### Intended Behavior
-Reverse an array in-place and print it.
+The function should reverse the array in-place and print the reversed result correctly.
 
 ### Issue Type
 Off-by-one error and syntax error
 
 ### Explanation
-The code accesses an invalid array index and also contains a missing semicolon.
+The code accesses an invalid array index using `arr[size - i]`. The program also contains a missing semicolon after the size calculation.
 
 ### Recommended Fix
-Use `size - 1 - i` and add the missing semicolon.
+Replace `arr[size - i]` with `arr[size - 1 - i]` and add the missing semicolon.
 
 ---
 
 ## Bug 6 – bug6.py
 
 ### Intended Behavior
-Count word frequencies and return the top-N words.
+The function should count word frequencies correctly and return the top-N most frequent words.
 
 ### Issue Type
 KeyError and TypeError
 
 ### Explanation
-The dictionary key may not exist on first access, and a float is used where an integer is required.
+The dictionary key may not exist when a word appears for the first time. A float value is also used where an integer is required for string multiplication.
 
 ### Recommended Fix
 Use `freq.get(word, 0) + 1` and replace the float value with an integer.
