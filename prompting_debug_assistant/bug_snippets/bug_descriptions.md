@@ -23,13 +23,13 @@
 **Notes**: getUser() returns a Promise without await so user.name is undefined. Fix by using async/await.
 
 ## Bug 5 - bug5.cpp
-**Intended Behavior**: Reverse an integer array in-place and print the result.
+**Intended Behavior**: The function should take an integer array, reverse all its elements in-place, and print the reversed array to the console.
 **Issue Type**: Syntax error and off-by-one error.
 **Expected Output**: 5 4 3 2 1
-**Notes**: Missing semicolon prevents compilation. arr[size-i] should be arr[size-1-i]. Fix both issues.
+**Notes**: Missing semicolon after size declaration prevents compilation. arr[size-i] should be arr[size-1-i] to avoid out-of-bounds memory access. Fix by adding the semicolon and correcting the index on both swap lines.
 
 ## Bug 6 - bug6.py
-**Intended Behavior**: Count word frequency and return top N most frequent words.
-**Issue Type**: KeyError and TypeError.
-**Expected Output**: ['the', 'cat'] for top 2 words.
-**Notes**: freq[word]+1 raises KeyError on first use. Float passed instead of int raises TypeError. Fix with freq.get(word,0)+1 and int cast.
+**Intended Behavior**: The function should count how many times each word appears in a sentence and return the top N most frequent words as a list. A second function should repeat a string a given number of times using an integer.
+**Issue Type**: Runtime KeyError and TypeError.
+**Expected Output**: ['the', 'cat'] for top 2 words. 'hello hello hello ' for string repetition.
+**Notes**: freq[word]+1 raises KeyError on first occurrence of any word. Float 3.0 passed instead of int raises TypeError. Fix with freq.get(word,0)+1 and cast times to int.
