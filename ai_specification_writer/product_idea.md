@@ -1,18 +1,19 @@
 # Product Idea
 
 ## Vision
-Empower students and educators to track academic progress, manage assignments, and receive AI-powered study recommendations in one unified platform.
+Empower students, teachers, and parents to track academic progress, manage assignments, and receive AI-powered study recommendations in one unified platform.
 
 ## Users
-- **Students**: want to organize their assignments, monitor grades, and get personalized study tips to improve performance.
-- **Teachers**: want to efficiently distribute assignments, track student progress, and identify students who need extra support.
-- **Parents**: want visibility into their child's academic performance and upcoming deadlines.
+- **Students**: want to organize assignments, monitor their grades, and get personalized study plans to improve academic performance.
+- **Teachers**: want to distribute assignments efficiently, track each student's progress, and identify students who need additional support.
+- **Parents**: want real-time visibility into their child's grades, attendance, and upcoming deadlines to stay involved in their education.
 
 ## Key Features
-- Assignment tracking with due date reminders
-- Grade calculator and GPA estimator
-- AI-powered study plan recommendations based on performance data
-- Real-time progress dashboard for teachers and parents
-- Multi-school and multi-class support for teachers
-- Absence tracking and attendance integration
-- Dark mode and multilingual interface support
+- Assignment tracking with due date reminders and priority labels
+- Grade calculator and GPA estimator with visual progress charts
+- AI-powered personalized study plan based on individual performance data
+- Real-time dashboard for teachers to monitor class and student progress
+- Parent portal with notifications for grades, absences, and deadlines
+- Multi-class and multi-school support for teachers managing multiple groups
+- Absence and attendance tracking integrated with class schedules
+- Dark mode and multilingual interface for accessibility
