@@ -37,18 +37,6 @@ As a student, I want to calculate my current GPA so that I can track my overall 
 ---
 
 ### User Story 4
-As a student, I want to receive an AI-generated study plan so that I can focus on the subjects where I need the most improvement.
-
-**Acceptance Criteria**:
-- AI analyzes the student's grades and identifies weak subjects.
-- A personalized weekly study plan is generated automatically.
-- Student can accept, modify, or regenerate the study plan.
-
-**Priority**: High
-
----
-
-### User Story 5
 As a teacher, I want to create and distribute assignments to my class so that students receive clear instructions and deadlines.
 
 **Acceptance Criteria**:
@@ -60,7 +48,7 @@ As a teacher, I want to create and distribute assignments to my class so that st
 
 ---
 
-### User Story 6
+### User Story 5
 As a teacher, I want to view the progress of each student in my class so that I can identify who needs additional support.
 
 **Acceptance Criteria**:
@@ -68,11 +56,11 @@ As a teacher, I want to view the progress of each student in my class so that I 
 - Students below a defined threshold are flagged automatically.
 - Teacher can click on any student to view detailed performance data.
 
-**Priority**: MVP
+**Priority**: High
 
 ---
 
-### User Story 7
+### User Story 6
 As a teacher, I want to track student attendance so that I can monitor participation and report absences accurately.
 
 **Acceptance Criteria**:
@@ -84,56 +72,20 @@ As a teacher, I want to track student attendance so that I can monitor participa
 
 ---
 
+### User Story 7
+As a student, I want to receive an AI-generated study plan so that I can focus on subjects where I need the most improvement.
+
+**Acceptance Criteria**:
+- AI analyzes the student's grades and identifies weak subjects.
+- A personalized weekly study plan is generated automatically.
+- Student can accept, modify, or regenerate the study plan.
+
+**Priority**: Medium
+
+---
+
 ### User Story 8
-As a teacher, I want to manage multiple classes from a single account so that I can handle all my teaching responsibilities in one place.
-
-**Acceptance Criteria**:
-- Teacher can create, switch between, and manage multiple class groups.
-- Each class has its own assignment list, student roster, and attendance records.
-- Teacher can copy assignments from one class to another.
-
-**Priority**: High
-
----
-
-### User Story 9
-As a student, I want to view my grade history for each subject so that I can see my improvement over time.
-
-**Acceptance Criteria**:
-- Student can select any subject and view all past grades.
-- Grades are displayed in a timeline or chart format.
-- Student can filter grades by semester or date range.
-
-**Priority**: Medium
-
----
-
-### User Story 10
-As a student, I want to use the platform in my preferred language so that I can understand all content without barriers.
-
-**Acceptance Criteria**:
-- Platform supports at least three languages including English and Azerbaijani.
-- Student can change the language from the settings menu at any time.
-- All UI elements, labels, and notifications change immediately after selection.
-
-**Priority**: Medium
-
----
-
-### User Story 11
-As a teacher, I want to export student grade reports as PDF files so that I can share them with school administration.
-
-**Acceptance Criteria**:
-- Teacher can select a class and generate a grade report with one click.
-- Report includes student names, grades per subject, and attendance summary.
-- Report is exported as a downloadable PDF file.
-
-**Priority**: Low
-
----
-
-### User Story 12
-As a student, I want to switch between light and dark mode so that I can use the platform comfortably in different lighting conditions.
+As a student, I want to switch between light and dark mode so that I can use the platform comfortably in any lighting condition.
 
 **Acceptance Criteria**:
 - Student can toggle between light and dark mode from the settings menu.
