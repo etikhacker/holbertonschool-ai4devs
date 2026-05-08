@@ -1,98 +1,35 @@
-# Bug Descriptions
-
 ## Bug 1 – bug1.py
-### Intended behavior
-Return the last n items from a list.
-
-### Issue type
-Off-by-one error / IndexError
-
-### Explanation
-The loop accesses an invalid index because it uses len(items) + 1.
-
-### Fix
-Replace len(items) + 1 with len(items).
-
----
+**Intended Behavior**: Return the last n items of a list.
+**Issue Type**: Off-by-one error.
+**Bug Description**: The range() call uses len(items)+1 instead of len(items), causing an IndexError when accessing items[len(items)].
+**Fix**: Change len(items)+1 to len(items) in the range() call.
 
 ## Bug 2 – bug2.py
-### Intended behavior
-Calculate the average of positive numbers.
-
-### Issue type
-Logical error
-
-### Explanation
-The code counts all elements instead of only positive numbers.
-
-### Fix
-Replace count = len(numbers) with count += 1.
-
----
+**Intended Behavior**: Calculate the average of all positive numbers in a list, ignoring zeros and negatives.
+**Issue Type**: Logical error.
+**Bug Description**: The variable count is set to len(numbers) instead of counting only positive elements, producing a wrong average.
+**Fix**: Increment count inside the if num > 0 block instead of using len(numbers).
 
 ## Bug 3 – bug3.js
-### Intended behavior
-Multiply all numbers in an array.
-
-### Issue type
-Incorrect initialization and loop boundary error
-
-### Explanation
-The product variable starts at 0 and the loop accesses an invalid index.
-
-### Fix
-Initialize product with 1 and replace <= with <.
-
-### Second issue type
-Type coercion
-
-### Second explanation
-A string causes concatenation instead of numeric addition.
-
-### Second fix
-Convert values to numbers before addition.
-
----
+**Intended Behavior**: Multiply every number in an array and return the product.
+**Issue Type**: Logical error and data type misuse.
+**Bug Description**: The product variable is initialized to 0 instead of 1, and the loop condition uses <= causing an out-of-bounds access that returns NaN.
+**Fix**: Initialize product to 1 and change the loop condition from <= to <.
 
 ## Bug 4 – bug4.js
-### Intended behavior
-Fetch user data and print the username.
-
-### Issue type
-Missing await in asynchronous code
-
-### Explanation
-The Promise is used before it is resolved.
-
-### Fix
-Use async/await.
-
----
+**Intended Behavior**: Fetch user data asynchronously and print the username.
+**Issue Type**: Runtime error due to missing await.
+**Bug Description**: The getUser() function returns a Promise, but await is missing, so user holds a Promise object and user.name is undefined.
+**Fix**: Declare printUser as async and add await before getUser(id).
 
 ## Bug 5 – bug5.cpp
-### Intended behavior
-Reverse an array in-place.
-
-### Issue type
-Off-by-one error and syntax error
-
-### Explanation
-The code accesses an invalid array index and also misses a semicolon.
-
-### Fix
-Use size - 1 - i and add the missing semicolon.
-
----
+**Intended Behavior**: Reverse an integer array in-place and print the result.
+**Issue Type**: Syntax error and off-by-one error.
+**Bug Description**: A missing semicolon prevents compilation. Additionally, arr[size-i] should be arr[size-1-i], causing out-of-bounds memory access.
+**Fix**: Add the missing semicolon and replace arr[size-i] with arr[size-1-i] on both swap lines.
 
 ## Bug 6 – bug6.py
-### Intended behavior
-Count word frequencies and return the top-N words.
-
-### Issue type
-KeyError and TypeError
-
-### Explanation
-The dictionary key may not exist and a float is used instead of an integer.
-
-### Fix
-Use freq.get(word, 0) + 1 and use an integer value.
+**Intended Behavior**: Count word frequency in a sentence and return the top N most frequent words.
+**Issue Type**: Runtime KeyError and TypeError.
+**Bug Description**: Using freq[word]+1 raises a KeyError on the first occurrence of any word. A float value passed to string repetition causes a TypeError.
+**Fix**: Use freq.get(word, 0)+1 instead of freq[word]+1 and cast times to int before multiplication.
