@@ -1,0 +1,55 @@
+```mermaid
+graph TD
+    Client["🌐 Client (Web / Mobile)"]
+
+    Client --> GW
+
+    subgraph Gateway Layer
+        GW[API Gateway]
+    end
+
+    GW --> AUTH
+    GW --> USER
+    GW --> RIDE
+    GW --> PAY
+    GW --> NOTIF
+    GW --> TRACK
+    GW --> ANALYTICS
+    GW --> REVIEW
+
+    subgraph Core Services
+        AUTH[Auth Service]
+        USER[User Service]
+        RIDE[Ride Service]
+        PAY[Payment Service]
+        NOTIF[Notification Service]
+        TRACK[Tracking Service]
+        ANALYTICS[Analytics Service]
+        REVIEW[Review & Rating Service]
+    end
+
+    AUTH --> AUTH_DB[(Auth DB\nPostgreSQL)]
+    USER --> USER_DB[(User DB\nPostgreSQL)]
+    RIDE --> RIDE_DB[(Ride DB\nMongoDB)]
+    PAY --> PAY_DB[(Payment DB\nPostgreSQL)]
+    REVIEW --> REVIEW_DB[(Review DB\nMongoDB)]
+    ANALYTICS --> ANALYTICS_DB[(Analytics DB\nClickHouse)]
+    TRACK --> CACHE[(Location Cache\nRedis)]
+
+    RIDE -->|ride booked event| MQ
+    PAY -->|payment event| MQ
+    REVIEW -->|review event| MQ
+    TRACK -->|location update| MQ
+
+    subgraph Message Broker
+        MQ[Message Queue\nRabbitMQ / Kafka]
+    end
+
+    MQ --> NOTIF
+    MQ --> ANALYTICS
+    MQ --> USER
+
+    PAY --> EXT_PAY[External Payment\nGateway]
+    NOTIF --> EXT_EMAIL[Email Provider\nSendGrid]
+    NOTIF --> EXT_SMS[SMS Provider\nTwilio]
+```
