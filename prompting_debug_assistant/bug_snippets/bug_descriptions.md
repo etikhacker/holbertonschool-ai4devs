@@ -5,13 +5,17 @@
 ## Bug 1 – bug1.py
 
 ### Intended Behavior
-The function should return the last `n` elements from a list without causing index errors.
+The function should return the last `n` elements from a list safely without accessing invalid indexes.
+
+### Expected Example
+Input: `[10, 20, 30, 40, 50], n = 3`
+Output: `[30, 40, 50]`
 
 ### Issue Type
 Off-by-one error / IndexError
 
 ### Explanation
-The loop uses `len(items) + 1`, which makes the code access an invalid list index.
+The loop uses `len(items) + 1`, which causes the program to access an index outside the valid list range.
 
 ### Recommended Fix
 Replace `len(items) + 1` with `len(items)`.
@@ -21,13 +25,17 @@ Replace `len(items) + 1` with `len(items)`.
 ## Bug 2 – bug2.py
 
 ### Intended Behavior
-The function should calculate the average value of only positive numbers in the list.
+The function should calculate the average of only positive numbers in the list.
+
+### Expected Example
+Input: `[5, -3, 10, -1, 0, 8]`
+Output: `7.67`
 
 ### Issue Type
 Logical error
 
 ### Explanation
-The code counts all elements instead of only positive numbers.
+The code counts all elements instead of counting only positive numbers.
 
 ### Recommended Fix
 Replace `count = len(numbers)` with `count += 1`.
@@ -39,17 +47,25 @@ Replace `count = len(numbers)` with `count += 1`.
 ### Intended Behavior
 The function should multiply all numbers in an array and return the final product.
 
+### Expected Example
+Input: `[2, 3, 4, 5]`
+Output: `120`
+
 ### Issue Type
 Incorrect initialization and loop boundary error
 
 ### Explanation
-The variable `product` starts at `0` instead of `1`. The loop also uses `<=`, which accesses an invalid array index.
+The variable `product` starts at `0` instead of `1`. The loop also accesses an invalid array index.
 
 ### Recommended Fix
 Initialize `product` with `1` and replace `<=` with `<`.
 
 ### Second Intended Behavior
-The function should add all array elements as numbers.
+The function should add all array values numerically.
+
+### Second Expected Example
+Input: `[1, "2", 3]`
+Output: `6`
 
 ### Second Issue Type
 Type coercion
@@ -58,14 +74,18 @@ Type coercion
 A string value causes concatenation instead of numeric addition.
 
 ### Second Recommended Fix
-Convert values to numbers before addition.
+Convert all values to numbers before addition.
 
 ---
 
 ## Bug 4 – bug4.js
 
 ### Intended Behavior
-The function should retrieve user data asynchronously and display the username correctly.
+The function should fetch user data asynchronously and correctly print the user's name.
+
+### Expected Example
+Input: `42`
+Output: `User name: Omar`
 
 ### Issue Type
 Missing await in asynchronous code
@@ -83,11 +103,15 @@ Use `async/await` when calling `getUser()`.
 ### Intended Behavior
 The function should reverse the array in-place and print the reversed array correctly.
 
+### Expected Example
+Input: `[1, 2, 3, 4, 5]`
+Output: `5 4 3 2 1`
+
 ### Issue Type
 Off-by-one error and syntax error
 
 ### Explanation
-The code accesses an invalid array index using `arr[size - i]`. The program also contains a missing semicolon.
+The code accesses an invalid array index and also contains a missing semicolon.
 
 ### Recommended Fix
 Replace `arr[size - i]` with `arr[size - 1 - i]` and add the missing semicolon.
@@ -97,7 +121,11 @@ Replace `arr[size - i]` with `arr[size - 1 - i]` and add the missing semicolon.
 ## Bug 6 – bug6.py
 
 ### Intended Behavior
-The function should count word frequencies correctly and return the top-N most frequent words.
+The function should count word frequencies correctly and return the most common words.
+
+### Expected Example
+Input: `"hello world hello", n = 1`
+Output: `["hello"]`
 
 ### Issue Type
 KeyError and TypeError
