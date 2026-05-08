@@ -4,6 +4,9 @@ def get_last_n(items, n):
         result.append(items[i])
     return result
 
-numbers = [10, 20, 30, 40, 50]
-print(get_last_n(numbers, 3))
-print(get_last_n(numbers, 5))
+def main():
+    numbers = [10, 20, 30, 40, 50]
+    print(get_last_n(numbers, 3))
+    print(get_last_n(numbers, 5))
+
+main()

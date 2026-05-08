@@ -11,4 +11,9 @@ function printUser(id) {
     console.log(`User name: ${user.name}`);
 }
 
-printUser(42);
+function main() {
+    printUser(42);
+    printUser(99);
+}
+
+main();

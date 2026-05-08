@@ -9,9 +9,11 @@ def top_n_words(sentence, n):
 def multiply_string_times(text, times):
     return text * times
 
-text = "hello "
-times = 3.0
-print(multiply_string_times(text, times))
+def main():
+    text = "hello "
+    times = 3.0
+    print(multiply_string_times(text, times))
+    sentence = "the cat sat on the mat the cat"
+    print(top_n_words(sentence, 2))
 
-sentence = "the cat sat on the mat the cat"
-print(top_n_words(sentence, 2))
+main()
