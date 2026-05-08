@@ -7,16 +7,16 @@
 ## Bug 1
 
 ### Intended Behavior
-The function should return the last `n` elements from a list without accessing invalid indexes.
+The function should return the last n elements from a list without accessing invalid indexes.
 
 ### Issue Type
 Off-by-one error / IndexError
 
 ### Explanation
-The loop uses `len(items) + 1`, which causes an invalid index access.
+The loop uses len(items) + 1, which causes an invalid index access on the last iteration.
 
 ### Recommended Fix
-Replace `len(items) + 1` with `len(items)`.
+Replace len(items) + 1 with len(items) in the range() call.
 
 ---
 
@@ -25,16 +25,16 @@ Replace `len(items) + 1` with `len(items)`.
 ## Bug 2
 
 ### Intended Behavior
-The function should calculate the average of only positive numbers.
+The function should calculate the average of only positive numbers in a list.
 
 ### Issue Type
 Logical error
 
 ### Explanation
-The program counts all elements instead of only positive numbers.
+The program counts all elements instead of only positive ones, resulting in a wrong average.
 
 ### Recommended Fix
-Replace `count = len(numbers)` with `count += 1`.
+Replace count = len(numbers) with count += 1 inside the if num > 0 block.
 
 ---
 
@@ -43,40 +43,22 @@ Replace `count = len(numbers)` with `count += 1`.
 ## Bug 3
 
 ### Intended Behavior
-The function should multiply all numbers in an array and return the correct product.
+The function should multiply all numbers in an array and return the correct product. A second function should sum array values numerically.
 
 ### Issue Type
-Incorrect initialization and loop boundary error
+Incorrect initialization, loop boundary error, and type coercion
 
 ### Explanation
-The variable `product` starts at `0` instead of `1`. The loop also accesses an invalid index.
+The variable product starts at 0 instead of 1. The loop accesses an invalid index using <=. A string value in the array causes concatenation instead of numeric addition.
 
 ### Recommended Fix
-Initialize `product` with `1` and replace `<=` with `<`.
-
----
-
-# FILE: bug3.js
-
-## Bug 4
-
-### Intended Behavior
-The function should add all array values numerically.
-
-### Issue Type
-Type coercion
-
-### Explanation
-A string value causes concatenation instead of numeric addition.
-
-### Recommended Fix
-Convert values to numbers before addition.
+Initialize product with 1, replace <= with <, and convert values to numbers before addition.
 
 ---
 
 # FILE: bug4.js
 
-## Bug 5
+## Bug 4
 
 ### Intended Behavior
 The function should fetch user data asynchronously and display the username correctly.
@@ -85,61 +67,43 @@ The function should fetch user data asynchronously and display the username corr
 Missing await in asynchronous code
 
 ### Explanation
-The Promise is accessed before it resolves.
+The Promise is accessed before it resolves, so user holds a Promise object and user.name is undefined.
 
 ### Recommended Fix
-Use `async/await`.
+Declare printUser as async and add await before getUser(id).
 
 ---
 
 # FILE: bug5.cpp
 
-## Bug 6
+## Bug 5
 
 ### Intended Behavior
-The function should reverse an array in-place and print the reversed result correctly.
+The function should reverse an integer array in-place and print the reversed result correctly.
 
 ### Issue Type
 Off-by-one error and syntax error
 
 ### Explanation
-The code accesses an invalid array index and also contains a missing semicolon.
+The code accesses an invalid array index using size-i instead of size-1-i. A missing semicolon also prevents compilation.
 
 ### Recommended Fix
-Use `size - 1 - i` and add the missing semicolon.
+Use size - 1 - i on both swap lines and add the missing semicolon.
 
 ---
 
 # FILE: bug6.py
 
-## Bug 7
+## Bug 6
 
 ### Intended Behavior
-The function should count word frequencies correctly.
+The function should count word frequencies correctly and return the top N words. A second function should repeat a string using an integer value.
 
 ### Issue Type
-KeyError
+KeyError and TypeError
 
 ### Explanation
-The dictionary key may not exist during the first occurrence of a word.
+The dictionary key may not exist on first occurrence causing a KeyError. A float value is used instead of an integer causing a TypeError.
 
 ### Recommended Fix
-Use `freq.get(word, 0) + 1`.
-
----
-
-# FILE: bug6.py
-
-## Bug 8
-
-### Intended Behavior
-The function should multiply strings using an integer value.
-
-### Issue Type
-TypeError
-
-### Explanation
-A float value is used instead of an integer.
-
-### Recommended Fix
-Replace the float value with an integer.
+Use freq.get(word, 0) + 1 and replace the float value with an integer.
