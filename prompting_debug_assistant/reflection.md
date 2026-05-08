@@ -30,12 +30,6 @@ Human intervention was most critical in two areas. First, in validating that fix
 
 ---
 
-## Reflection on AI Debugging Experience
-
-While the AI provided fast and often accurate debugging suggestions, I did not fully trust every solution without testing it myself. Some fixes appeared correct syntactically but still failed logical edge cases during runtime testing. This showed that AI can accelerate debugging, but developers must still verify outputs carefully. Blind trust in AI-generated fixes can introduce hidden bugs, especially in languages like C++ where undefined behavior may not immediately appear. Over time, I learned to treat AI suggestions as guidance rather than guaranteed solutions.
-
----
-
 ## Conclusion
 
 AI-assisted debugging significantly accelerated the identification phase. Bugs that might take an experienced developer several minutes of reading were diagnosed in seconds. However, AI is most effective as a first-pass tool, not a final authority. It excels at recognizing common patterns but can miss low-level language-specific behavior and compounding interactions between multiple bugs. The most productive workflow treats AI as a knowledgeable collaborator: fast at pattern recognition, but requiring human oversight for validation, testing, and deeper reasoning. In real-world debugging, this combination is far more powerful than either approach alone.
