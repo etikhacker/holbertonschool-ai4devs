@@ -1,11 +1,10 @@
-$content = @"
 # Prompt Use Cases
 
 ## Code Quality
 - **Refactoring**
   - **Goal**: Improve readability and reduce code complexity
   - **Input**: Source function in any language
-  - **Output**: Optimized and cleaner code with explanation
+  - **Output**: Optimized code with explanation of changes
 
 - **Style Enforcement**
   - **Goal**: Enforce consistent naming and formatting
@@ -45,7 +44,7 @@ $content = @"
   - **Output**: Structured Markdown README with all sections
 
 - **Inline Comment Writing**
-  - **Goal**: Add clear comments to complex code
+  - **Goal**: Add clear comments to complex code sections
   - **Input**: Uncommented code block
   - **Output**: Same code with accurate inline comments
 
@@ -57,28 +56,26 @@ $content = @"
 
 - **Edge Case Identification**
   - **Goal**: Discover inputs likely to cause failures
-  - **Input**: Function signature and intended behavior
+  - **Input**: Function signature and intended behavior description
   - **Output**: Edge case list with inputs and expected outputs
 
 - **Mock Generation**
   - **Goal**: Create mocks for external dependencies in tests
-  - **Input**: Function calling an API or database
-  - **Output**: Mock implementation with configurable returns
+  - **Input**: Function that calls an API or database
+  - **Output**: Mock implementation with configurable return values
 
 ## Code Generation
 - **Boilerplate Scaffolding**
   - **Goal**: Generate project structure to avoid repetitive setup
-  - **Input**: Project type, language, and framework
+  - **Input**: Project type, language, and framework name
   - **Output**: Starter code with folder structure and entry point
 
 - **Algorithm Implementation**
   - **Goal**: Implement a known algorithm from a description
-  - **Input**: Algorithm name or pseudocode
+  - **Input**: Algorithm name or pseudocode steps
   - **Output**: Clean implementation in the requested language
 
 - **API Integration**
   - **Goal**: Generate code to connect with a third-party API
-  - **Input**: API endpoint description or documentation
-  - **Output**: Working integration with authentication and error handling
-"@
-[System.IO.File]::WriteAllText("D:\bug_descriptions.md\prompt_patterns_library\prompt_use_cases.md", $content, [System.Text.Encoding]::UTF8)
+  - **Input**: API endpoint description or documentation link
+  - **Output**: Working integration code with error handling
