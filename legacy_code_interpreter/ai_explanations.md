@@ -1,221 +1,51 @@
-# AI Explanations of Complex Code
+# Risk Assessment
 ## Project: `legacy_code_interpreter` — `holbertonschool-ai4devs`
 
-> AI-generated plain-English explanations for complex legacy code sections,
-> including identified issues and recommended improvements.
+> Identified risks in the legacy codebase, each with severity, precise location,
+> concrete impact, and a recommended remediation step.
 
 ---
 
-## Section 1 – `Lexer.tokenize()`
+## Risk Table
 
-```python
-def tokenize(self, source):
-    tokens = []
-    i = 0
-    while i < len(source):
-        if source[i].isspace():
-            i += 1
-        elif source[i].isdigit():
-            j = i
-            while j < len(source) and source[j].isdigit():
-                j += 1
-            tokens.append(('NUMBER', int(source[i:j])))
-            i = j
-        elif source[i].isalpha():
-            j = i
-            while j < len(source) and source[j].isalnum():
-                j += 1
-            word = source[i:j]
-            tokens.append(('KEYWORD' if word in KEYWORDS else 'IDENT', word))
-            i = j
-        elif source[i] in '+-*/=(){};':
-            tokens.append(('OP', source[i]))
-            i += 1
-        else:
-            raise SyntaxError(f"Unknown character: {source[i]}")
-    return tokens
-```
-
-- **Plain English**: This function reads through source code character by character and breaks it into a list of tokens (numbers, keywords, identifiers, operators). It's the first step of the interpreter — turning raw text into meaningful chunks the parser can understand.
-- **Pattern**: Manual character-by-character scanning using nested `while` loops. A classic hand-rolled lexer approach.
-- **Issues**:
-  - No support for string literals or comments.
-  - Float numbers (e.g., `3.14`) are not handled — the lexer only reads integers.
-  - `SyntaxError` is raised without line/column information, making debugging difficult.
-  - `KEYWORDS` set is referenced but not defined inside the function — relies on a global.
-- **Improvements**:
-  - Use Python's `re` module with compiled regex patterns for cleaner, more maintainable tokenization.
-  - Add line and column tracking to error messages.
-  - Support floats, strings, and single-line comments (`#`).
-  - Replace the global `KEYWORDS` dependency with a parameter or class attribute.
+| # | Risk | Severity | Location | Impact | Recommendation |
+|---|---|---|---|---|---|
+| 1 | No division-by-zero guard | **High** | `Interpreter.evaluate()` | Any expression like `x / 0` raises an unhandled `ZeroDivisionError` that crashes the entire interpreter process with no user-facing message | Add `if right == 0: raise RuntimeError("Division by zero")` before the `/` operation |
+| 2 | Infinite loop with no timeout or iteration cap | **High** | `Interpreter.run_program()` — `WHILE` branch | A `while 1:` or any non-terminating condition hangs the interpreter permanently, blocking the process and requiring a manual kill | Introduce a `MAX_ITERATIONS = 100_000` counter; raise `RuntimeError("Loop exceeded max iterations")` when exceeded |
+| 3 | Silent `None` return on unrecognised AST node | **High** | `Interpreter.evaluate()` — missing `else` clause | When an unknown node type is evaluated, `None` is silently returned and passed into further arithmetic, producing confusing `TypeError: unsupported operand type NoneType` far from the actual fault | Add a final `else: raise RuntimeError(f"Unknown AST node: {node[0]}")` |
+| 4 | No input sanitisation or safe error recovery in Lexer | **High** | `Lexer.tokenize()` | A single unexpected character (e.g. `@`, `$`) raises a bare Python `SyntaxError` with no line/column info and aborts tokenisation of the entire source, giving the user nothing useful to act on | Collect all lexical errors with positions and report them together instead of raising immediately |
+| 5 | Missing unit tests across all layers | **High** | Entire codebase | With zero test coverage, any change to the Lexer, Parser, or Evaluator can silently break existing behaviour; bugs are only discovered at runtime by end users | Add `pytest` test suites for each layer; target at least 80 % coverage before further development |
+| 6 | Scope mutation inconsistency (`set` vs `assign`) | **High** | `Environment` class | Calling `set()` on a name that already exists in a parent scope creates a shadow variable in the local scope instead of updating the outer binding; programs that rely on outer-variable mutation produce wrong results with no error | Rename `set()` to `define()` for new bindings; make `assign()` the sole method for updating any existing binding |
+| 7 | Fragile positional tuple access for AST nodes | **Medium** | `Parser` output consumed by `Interpreter.evaluate()` | Nodes are accessed by raw index (`node[2]`, `node[3]`); if any parser change shifts the tuple layout, the evaluator raises a cryptic `IndexError` with no indication of which node type caused it | Replace tuples with `dataclasses` or `typing.NamedTuple` so fields have names (`node.left`, `node.right`) and type mismatches surface early |
+| 8 | No error recovery in the parser | **Medium** | `Parser.parse_expression()` and call chain | The first syntax error immediately aborts parsing; users must fix one error, re-run, find the next, and repeat — a poor developer experience and slow feedback cycle | Implement a synchronisation strategy (skip to the next statement delimiter `;` or newline) so the parser can report multiple errors in one pass |
+| 9 | Recursive scope lookup vulnerable to stack overflow | **Medium** | `Environment.get()` and `Environment.assign()` | Programs with deeply nested function calls (>~950 levels on CPython) trigger Python's own `RecursionError`, which leaks implementation details to the user | Rewrite both methods as iterative loops traversing the `parent` chain |
+| 10 | Hardcoded global `KEYWORDS` set | **Medium** | `Lexer.tokenize()` — module level | Any module that imports the lexer can accidentally mutate `KEYWORDS`; adding a new reserved word requires hunting for the global rather than changing a single configuration point | Move `KEYWORDS` to a class constant or inject it as a constructor parameter |
+| 11 | No float or string literal support | **Medium** | `Lexer.tokenize()` — digit and character branches | Source code containing `3.14` is tokenised as two integers separated by an `OP` dot, silently producing wrong values; string literals are tokenised character-by-character as identifiers with no error | Extend the lexer to recognise float patterns (`\d+\.\d+`) and quoted string literals before the integer branch fires |
+| 12 | No logging or structured execution tracing | **Medium** | All interpreter stages | When the interpreter fails, there is no record of what source was being evaluated, which statement caused the failure, or what variable values were in scope — diagnosing bug reports is extremely slow | Integrate Python's `logging` module; emit `DEBUG`-level traces at each eval step and `ERROR`-level entries on all raised exceptions |
+| 13 | Tight coupling between Parser tuple format and Evaluator | **Medium** | `Parser` ↔ `Interpreter` interface | The evaluator contains explicit knowledge of every tuple shape the parser produces; changing one requires manually updating the other with no compiler or type system to catch mismatches | Define a shared `ast.py` module with typed node classes that both components import, making the contract explicit |
+| 14 | No `break`, `continue`, or `return` control flow | **Low** | `Interpreter.run_program()` | Loops cannot exit early and functions cannot return mid-body; developers working around this write convoluted boolean flags that increase complexity and introduce subtle bugs | Implement a `ControlFlowSignal` exception hierarchy (`BreakSignal`, `ReturnSignal`) caught at the appropriate execution level |
+| 15 | Unrestricted variable type assignment | **Low** | `Environment.set()` / `Environment.assign()` | Any Python object — including `None`, functions, or lists — can be stored in a variable; operations on mixed types produce raw Python error messages rather than interpreter-level ones | Add optional type annotations to variable declarations and validate on assignment; surface type mismatches as interpreter errors |
+| 16 | Hand-rolled character scanner instead of `re` | **Low** | `Lexer.tokenize()` | The nested `while` loops are ~50 lines of imperative logic that is difficult to read, test in isolation, or extend with new token types; the equivalent using `re.compile` with named groups is ~10 lines | Rewrite the tokeniser using a compiled `re` pattern list; each pattern maps to a token type, making adding new tokens a one-line change |
+| 17 | No inline documentation or docstrings | **Low** | Entire codebase | New contributors cannot determine the expected input format, return type, or side effects of any public method without reading the full implementation; onboarding time is significantly higher than necessary | Add `Google-style` or `NumPy-style` docstrings to all public methods and a top-level `README.md` describing the interpreter architecture |
 
 ---
 
-## Section 2 – `Parser.parse_expression()`
+## Severity Breakdown
 
-```python
-def parse_expression(self):
-    left = self.parse_term()
-    while self.current_token and self.current_token[0] == 'OP' \
-            and self.current_token[1] in ('+', '-'):
-        op = self.current_token[1]
-        self.advance()
-        right = self.parse_term()
-        left = ('BINOP', op, left, right)
-    return left
-
-def parse_term(self):
-    left = self.parse_factor()
-    while self.current_token and self.current_token[0] == 'OP' \
-            and self.current_token[1] in ('*', '/'):
-        op = self.current_token[1]
-        self.advance()
-        right = self.parse_factor()
-        left = ('BINOP', op, left, right)
-    return left
-```
-
-- **Plain English**: This is a recursive descent parser that handles mathematical operator precedence. `parse_term()` handles `*` and `/` first (higher precedence), while `parse_expression()` handles `+` and `-` second (lower precedence). Together they ensure `2 + 3 * 4` is evaluated as `2 + (3 * 4) = 14`, not `(2 + 3) * 4 = 20`.
-- **Pattern**: Classic recursive descent parsing with operator precedence encoded through function call hierarchy.
-- **Issues**:
-  - No error recovery — if the token stream is malformed, the parser crashes immediately.
-  - Operator precedence is hardcoded across two functions; adding new operators (e.g., `**`, `%`) requires modifying multiple methods.
-  - No support for unary operators like `-5` or `+x`.
-  - `advance()` is called without checking for end-of-input in all branches.
-- **Improvements**:
-  - Introduce a Pratt parser or precedence table to handle operator precedence dynamically.
-  - Add explicit end-of-input checks and meaningful parse error messages.
-  - Add support for unary operators in `parse_factor()`.
-  - Consider building an AST node class instead of raw tuples for better readability and extensibility.
+| Severity | Count | Proportion |
+|---|---|---|
+| 🔴 High | 6 | 35 % |
+| 🟡 Medium | 7 | 41 % |
+| 🟢 Low | 4 | 24 % |
 
 ---
 
-## Section 3 – `Interpreter.evaluate()`
+## Top 5 Priority Fixes (Recommended Remediation Order)
 
-```python
-def evaluate(self, node):
-    if node[0] == 'NUMBER':
-        return node[1]
-    elif node[0] == 'IDENT':
-        if node[1] not in self.env:
-            raise NameError(f"Undefined variable: {node[1]}")
-        return self.env[node[1]]
-    elif node[0] == 'BINOP':
-        left = self.evaluate(node[2])
-        right = self.evaluate(node[3])
-        if node[1] == '+': return left + right
-        elif node[1] == '-': return left - right
-        elif node[1] == '*': return left * right
-        elif node[1] == '/': return left / right
-    elif node[0] == 'ASSIGN':
-        val = self.evaluate(node[2])
-        self.env[node[1]] = val
-        return val
-```
-
-- **Plain English**: This is the tree-walking evaluator — the heart of the interpreter. It takes an AST node, figures out what kind of node it is (a number, a variable, an operation, an assignment), and computes the result. It calls itself recursively on sub-nodes to evaluate nested expressions.
-- **Pattern**: Tree-walking interpreter using if-elif chains on tuple tags (node types).
-- **Issues**:
-  - Division by zero is not handled — `1 / 0` will crash with an unhandled `ZeroDivisionError`.
-  - The function returns `None` implicitly if a node type is not matched (e.g., unknown `node[0]`), which causes silent bugs downstream.
-  - Using raw tuples with positional indexing (e.g., `node[2]`, `node[3]`) is fragile — a mismatched node shape causes a confusing `IndexError`.
-  - No support for boolean expressions, comparison operators, or control flow nodes.
-- **Improvements**:
-  - Add explicit division-by-zero check with a clear runtime error message.
-  - Add a `default` else clause that raises `RuntimeError: Unknown AST node type`.
-  - Replace tuple-based AST nodes with dataclasses or named tuples for safer, more readable access (e.g., `node.left` instead of `node[2]`).
-  - Use a dispatch dictionary (`{node_type: handler_func}`) instead of if-elif chains for scalability.
-
----
-
-## Section 4 – `Interpreter.run_program()`
-
-```python
-def run_program(self, statements):
-    result = None
-    for stmt in statements:
-        if stmt[0] == 'IF':
-            cond = self.evaluate(stmt[1])
-            if cond:
-                for s in stmt[2]:
-                    result = self.evaluate(s)
-            else:
-                if len(stmt) > 3:
-                    for s in stmt[3]:
-                        result = self.evaluate(s)
-        elif stmt[0] == 'WHILE':
-            while self.evaluate(stmt[1]):
-                for s in stmt[2]:
-                    result = self.evaluate(s)
-        else:
-            result = self.evaluate(stmt)
-    return result
-```
-
-- **Plain English**: This function runs a list of statements one by one. It handles `if/else` conditionals and `while` loops by checking conditions and executing the relevant code blocks. For anything else, it delegates to `evaluate()`. It's essentially the program's main execution loop.
-- **Pattern**: Flat statement executor with inline control flow handling using if-elif.
-- **Issues**:
-  - `WHILE` loops have no iteration limit — an infinite loop (e.g., `while 1:`) will hang the interpreter with no way to break out.
-  - `IF` statement checks `len(stmt) > 3` to detect an `else` branch — this is fragile and unclear. A missing `else` and a malformed `if` node look identical.
-  - No support for `break`, `continue`, or `return` statements.
-  - All control flow is handled inside one function, making it hard to extend (e.g., adding `for` loops or `try/except`).
-- **Improvements**:
-  - Add a maximum loop iteration counter or timeout guard to prevent infinite loops.
-  - Use dedicated AST node classes with named fields (`node.condition`, `node.body`, `node.else_body`) instead of positional tuple access.
-  - Separate control flow handling into dedicated methods (`execute_if`, `execute_while`) for clarity.
-  - Implement a `Signal` or `ControlFlow` exception pattern to support `break`/`return`/`continue`.
-
----
-
-## Section 5 – `Environment` (Variable Scope)
-
-```python
-class Environment:
-    def __init__(self, parent=None):
-        self.vars = {}
-        self.parent = parent
-
-    def get(self, name):
-        if name in self.vars:
-            return self.vars[name]
-        elif self.parent:
-            return self.parent.get(name)
-        else:
-            raise NameError(f"Variable '{name}' is not defined")
-
-    def set(self, name, value):
-        self.vars[name] = value
-
-    def assign(self, name, value):
-        if name in self.vars:
-            self.vars[name] = value
-        elif self.parent:
-            self.parent.assign(name, value)
-        else:
-            raise NameError(f"Cannot assign to undefined variable '{name}'")
-```
-
-- **Plain English**: This class manages variable storage and scope. Each function call or block gets its own `Environment` that has a link to its parent (outer) scope. When you look up a variable, it first checks the local scope, then walks up through parent scopes until it finds it — just like how Python itself resolves variable names.
-- **Pattern**: Linked-list scope chain (lexical scoping). A well-known and correct pattern for implementing closures and nested scopes.
-- **Issues**:
-  - `set()` always creates or overwrites in the **local** scope, even if the variable was defined in a parent scope. This breaks re-assignment of outer variables (there is no equivalent of Python's `nonlocal`).
-  - `assign()` raises a `NameError` when trying to assign to an undeclared variable, but there's no `declare()` method to explicitly introduce a new variable — `set()` and `assign()` have overlapping but inconsistent responsibilities.
-  - Recursive `get()` and `assign()` can hit Python's recursion limit in deeply nested scopes.
-  - No support for read-only/constant bindings.
-- **Improvements**:
-  - Rename `set()` to `define()` to make it clear it creates a new local binding.
-  - Clarify the `set` vs `assign` distinction in documentation or refactor into a single method with a `local_only` flag.
-  - Add an iterative (loop-based) scope lookup to avoid deep recursion issues.
-  - Consider adding a `constants` set to support immutable variable declarations.
-
----
-
-## Summary Table
-
-| Section | Function / Class | Main Issue | Priority Fix |
+| Priority | Risk | Effort | Impact |
 |---|---|---|---|
-| 1 | `Lexer.tokenize()` | No float/string support, poor error messages | Use `re` module + line tracking |
-| 2 | `Parser.parse_expression()` | Hardcoded precedence, no unary ops | Pratt parser or precedence table |
-| 3 | `Interpreter.evaluate()` | Silent `None` returns, division by zero | Default error case + dataclass AST nodes |
-| 4 | `Interpreter.run_program()` | Infinite loop risk, fragile tuple access | Loop guard + dedicated execute methods |
-| 5 | `Environment` | `set()` vs `assign()` inconsistency | Rename to `define()` + iterative lookup |
+| 1 | Add division-by-zero guard | Very Low (1 line) | Prevents hard interpreter crash |
+| 2 | Add `while` loop iteration cap | Low (5 lines) | Prevents process hang |
+| 3 | Add `else` error clause in `evaluate()` | Very Low (2 lines) | Eliminates silent `None` propagation |
+| 4 | Write unit tests for Lexer, Parser, Evaluator | Medium (1–2 days) | Safety net for all future changes |
+| 5 | Refactor AST tuples to `dataclasses` | Medium (half-day) | Removes the root cause of risks 7 and 13 simultaneously |
