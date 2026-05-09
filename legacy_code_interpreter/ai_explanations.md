@@ -20,10 +20,17 @@ initialize: function() {
 }
 ```
 
-- **Plain English**: This is the setup function that runs when the app first loads. It finds important HTML elements on the page (like the input box and footer) and sets up "listeners" — meaning it tells the app what to do when certain events happen, such as when a new todo is added or when the list is filtered.
-- **Pattern**: Event-driven initialization using Backbone's `listenTo` method. All UI updates are triggered reactively via model events.
-- **Issues**: The `all` event listener calls `render` on every single change to the collection, including unrelated events. This causes unnecessary full re-renders and degrades performance as the todo list grows.
-- **Improvements**: Replace the broad `all` event with specific targeted events. Debounce the render function to batch rapid consecutive updates into a single render cycle.
+- **Plain English**: This is the startup function that runs once when the application first loads. It finds and stores references to key HTML elements (input box, footer, main section, and the "toggle all" checkbox). It then registers event listeners so the app knows what to do when things change — for example, when a new todo is added, when the list is reset, or when a filter is applied. Finally, it calls `Todos.fetch()` to load any previously saved todos from localStorage.
+- **Pattern**: Event-driven initialization using Backbone's `listenTo` method. All UI updates are triggered reactively in response to model and collection events rather than being called directly.
+- **Issues**:
+  - The `listenTo(Todos, 'all', this.render)` line subscribes to every single event fired by the collection, including internal Backbone events that have nothing to do with the UI. This means `render()` is called far more often than necessary.
+  - `Todos.fetch()` is called with no error handling. If localStorage is unavailable or corrupted, the app silently fails with no feedback to the user.
+  - DOM element references are stored directly on the view object with no null checks. If an expected element is missing from the HTML, the app will crash with an unhelpful error.
+- **Improvements**:
+  - Replace `listenTo(Todos, 'all', this.render)` with specific targeted event bindings to avoid unnecessary renders.
+  - Add an error callback to `Todos.fetch()`: `Todos.fetch({ error: function() { console.error('Failed to load todos'); } })`.
+  - Add null checks for each DOM element reference and log a warning if any are missing.
+  - Consider debouncing the `render` function to batch multiple rapid updates into a single render pass, improving performance on bulk operations.
 
 ---
 
@@ -52,10 +59,18 @@ render: function() {
 }
 ```
 
-- **Plain English**: This function updates what the user sees on screen. It counts how many todos are done and how many are left, then shows or hides the footer and main area depending on whether any todos exist. It also highlights the correct filter button (All, Active, Completed) and checks or unchecks the "toggle all" checkbox.
-- **Pattern**: Manual DOM manipulation with jQuery. The entire stats section is re-rendered by replacing the footer's inner HTML on every call.
-- **Issues**: Replacing the full footer HTML on every render is inefficient. It also destroys and recreates DOM nodes unnecessarily, which can cause issues with attached event listeners. No virtual DOM or diffing mechanism is used.
-- **Improvements**: Use targeted DOM updates instead of replacing entire HTML blocks. Consider migrating to a modern framework (React, Vue) that uses a virtual DOM to minimize actual DOM changes.
+- **Plain English**: This function is responsible for updating the entire visible state of the application. It counts completed and remaining todos, then decides whether to show or hide the main content area and footer. If todos exist, it regenerates the footer's HTML to reflect the current counts and highlights the correct filter tab (All, Active, or Completed). It also checks or unchecks the "toggle all" checkbox based on whether any todos remain.
+- **Pattern**: Imperative, jQuery-based DOM manipulation. The footer is updated by completely replacing its inner HTML using a template function on every render call, regardless of whether the displayed values have actually changed.
+- **Issues**:
+  - Replacing the entire footer HTML on every render is wasteful. It destroys and recreates DOM nodes even when only one number changes, which can cause issues with any event listeners attached to those nodes.
+  - `Todos.completed()` and `Todos.remaining()` are called here and also internally during other operations, with no shared cache. Each call iterates the full collection independently.
+  - The filter link selector `'[href="#/' + (Todos.getFilter() || '') + '"]'` is a fragile string concatenation. If the filter value contains special characters, it could produce an invalid CSS selector and throw a runtime error.
+  - There is no guard to prevent rendering when nothing has actually changed, leading to unnecessary DOM thrashing.
+- **Improvements**:
+  - Introduce a simple dirty-checking mechanism: store the last rendered values of `completed` and `remaining` and skip the render if they have not changed.
+  - Replace full `innerHTML` replacement with targeted updates to only the specific text nodes that display the counts.
+  - Sanitize or encode the filter value before using it in a CSS attribute selector to prevent selector injection.
+  - Cache the results of `completed()` and `remaining()` at the collection level and invalidate them only when the collection changes.
 
 ---
 
@@ -72,10 +87,18 @@ remaining: function() {
 }
 ```
 
-- **Plain English**: `completed()` returns a list of all todos that are marked as done. `remaining()` returns all todos that are NOT done by removing the completed ones from the full list. These two functions are called every time the view re-renders.
-- **Pattern**: Functional filtering using Underscore.js `filter` and `without` methods. `remaining()` depends directly on `completed()`, creating an implicit chain.
-- **Issues**: Both functions are recalculated on every render with no caching. For large lists, this results in redundant iteration. The use of `without.apply` with a spread of the completed array is an unusual pattern that reduces readability.
-- **Improvements**: Cache the results of `completed()` and `remaining()` and invalidate the cache only when the collection changes. Replace `without.apply` with a clearer `filter` call for better readability.
+- **Plain English**: `completed()` goes through the full list of todos and returns only the ones that are marked as done. `remaining()` returns everything that is NOT done, by taking the full list and removing all the completed ones. These two functions are used frequently throughout the app to calculate counts and apply filters.
+- **Pattern**: Functional collection filtering using Underscore.js `filter` and `without` helpers. `remaining()` depends directly on `completed()`, creating an implicit dependency chain between the two methods.
+- **Issues**:
+  - Both functions iterate the entire collection every time they are called, with no memoization or caching. Since `render()` calls both on every update, this results in redundant full-collection traversals that grow more expensive as the list grows.
+  - `remaining()` uses `this.without.apply(this, this.completed())`, which spreads the completed array as individual arguments to `without`. For very large lists, this can exceed the JavaScript call stack argument limit and throw a runtime error.
+  - The dependency of `remaining()` on `completed()` is implicit and not documented, making it easy for a future developer to refactor `completed()` without realizing it will break `remaining()`.
+  - Neither function is unit tested, so regressions in their behavior would only be caught by manual UI testing.
+- **Improvements**:
+  - Add memoization: cache the results of `completed()` and `remaining()` and invalidate the cache whenever the collection emits an `add`, `remove`, or `change:completed` event.
+  - Rewrite `remaining()` using an explicit filter: `return this.filter(function(todo) { return !todo.get('completed'); });` — this is clearer, avoids the `apply` spread, and does not depend on `completed()`.
+  - Add JSDoc comments documenting the return types and the dependency relationship.
+  - Write unit tests covering edge cases: empty collection, all completed, none completed, mixed states.
 
 ---
 
@@ -94,10 +117,20 @@ close: function() {
 }
 ```
 
-- **Plain English**: This function runs when the user finishes editing a todo item (by pressing Enter or clicking away). It reads the text from the input field. If the text is not empty after trimming whitespace, it saves the updated title. If the field is empty, it deletes the todo entirely. It also removes the visual "editing" style from the item.
-- **Pattern**: Inline save-or-delete logic with no validation beyond empty string check.
-- **Issues**: No maximum length validation on the title. No error handling if `model.save()` fails (e.g., localStorage quota exceeded). The function silently deletes the todo if the user accidentally clears the field.
-- **Improvements**: Add a character limit validation. Wrap `model.save()` in error handling with user feedback. Consider prompting the user before deleting a todo when the field is cleared, to prevent accidental data loss.
+- **Plain English**: This function runs when a user finishes editing a todo — either by pressing Enter or by clicking somewhere else on the page. It reads the current text from the edit input field and trims any extra whitespace from both ends. If the trimmed text is not empty, it saves the new title to the model and persists it. If the text is completely empty, it deletes the todo entirely. In both cases, it removes the visual "editing" style from the todo item.
+- **Pattern**: Save-or-delete logic with a single truthy check. Editing state is managed by toggling a CSS class on the element.
+- **Issues**:
+  - There is no maximum length validation on the title. A user could paste a very long string that breaks the UI layout without any warning or truncation.
+  - `this.model.save()` is called with no error handler. If localStorage is full or unavailable, the save silently fails and the user sees no feedback.
+  - Deleting the todo when the field is empty is a destructive action triggered by a common mistake (accidentally clearing the input). There is no confirmation prompt or undo mechanism.
+  - The function does not check whether the new title is actually different from the existing title before saving, resulting in unnecessary writes to localStorage on every blur event even when nothing changed.
+  - `this.$el.removeClass('editing')` is called unconditionally at the end, even if an error occurred during save. This hides the editing state before confirming success.
+- **Improvements**:
+  - Add a maximum length check (e.g., 200 characters) with a visual warning when the limit is exceeded.
+  - Add an error callback to `model.save()` that keeps the item in editing mode and displays an error message to the user.
+  - Compare `trimmedValue` to `this.model.get('title')` before saving and skip the save if the value has not changed.
+  - Consider prompting the user before deleting, or implementing a brief undo window (e.g., a toast notification with an "Undo" button).
+  - Only call `removeClass('editing')` after confirming the save was successful.
 
 ---
 
@@ -111,7 +144,16 @@ toggle: function() {
 }
 ```
 
-- **Plain English**: This is a simple function that flips a todo between "done" and "not done". If it was completed, it becomes incomplete; if it was incomplete, it becomes completed. The new state is immediately saved to localStorage.
-- **Pattern**: Simple boolean toggle with immediate persistence. Concise and readable.
-- **Issues**: No optimistic UI rollback if the save operation fails. In a real backend scenario, the UI would update before confirming the server accepted the change, with no mechanism to revert on failure. There is also no timestamp recorded when a todo is completed, making it impossible to sort by completion time.
-- **Improvements**: Add error handling with a rollback mechanism. Add a `completedAt` timestamp field that is set when `completed` becomes `true` and cleared when it becomes `false`. This enables sorting and filtering by completion time.
+- **Plain English**: This is a one-line function that switches a todo between "done" and "not done". It reads the current value of the `completed` field, flips it to the opposite boolean value, and immediately saves the result to localStorage. This is called when the user clicks the checkbox next to a todo item.
+- **Pattern**: Simple boolean toggle with immediate synchronous persistence to localStorage via Backbone's `save` method.
+- **Issues**:
+  - There is no error handling if `save()` fails. The UI will show the todo as toggled even if the value was not actually persisted, leading to inconsistency between the displayed state and the stored state.
+  - No `completedAt` timestamp is recorded when a todo is marked as completed, and it is not cleared when the todo is uncompleted. This makes it impossible to sort todos by completion time or display when each item was finished.
+  - The function has no input validation or guard clause. If `this.get('completed')` returns `undefined` (e.g., the model was initialized without a `completed` field), the result of `!undefined` is `true`, silently creating an unexpected state.
+  - There is no optimistic UI rollback strategy. In a server-backed version of this app, a failed API call would leave the UI in an incorrect state with no automatic correction.
+  - The function is not covered by any tests, so a refactor could break toggle behavior without any automated detection.
+- **Improvements**:
+  - Add an error callback: `this.save({ completed: !this.get('completed') }, { error: function() { self.save({ completed: !self.get('completed') }); } })` to roll back the toggle on failure.
+  - Add a `completedAt` field: set it to `new Date().toISOString()` when completing and `null` when uncompleting.
+  - Add a default value for `completed` in the model's `defaults` object: `defaults: { completed: false }` to ensure the field is always a boolean.
+  - Write unit tests covering: toggling from false to true, toggling from true to false, and behavior when `completed` is undefined.
