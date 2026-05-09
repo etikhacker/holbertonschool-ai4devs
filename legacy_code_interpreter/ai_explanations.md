@@ -156,16 +156,42 @@ toggle: function() {
 }
 ```
 
-- **Plain English**: This function switches a todo between "done" and "not done". It reads the current value of the `completed` field, flips it to the opposite boolean, and immediately saves the result to localStorage. It is called when the user clicks the checkbox next to a todo item.
-- **Pattern**: Simple boolean toggle with immediate synchronous persistence via Backbone's `save` method.
+- **Plain English**: This is a one-line function that switches a todo item between "done" and "not done". When a user clicks the checkbox next to a todo, this function is called. It reads the current boolean value of the `completed` field on the model, flips it to the opposite value (`true` becomes `false`, `false` becomes `true`), and immediately saves the updated model to localStorage using Backbone's `save` method. Despite its simplicity, this function is one of the most frequently called in the entire app and has several hidden reliability and data quality problems.
+- **Pattern**: Simple boolean toggle with immediate synchronous persistence via Backbone's `save` method. No intermediate state, no optimistic update management, no side effects beyond the save call.
 - **Issues**:
-  - No error handling if `save()` fails. The UI shows the todo as toggled even if the value was not persisted, causing state inconsistency.
-  - No `completedAt` timestamp is recorded, making it impossible to sort todos by completion time or display when each item was finished.
-  - If `this.get('completed')` returns `undefined` (model initialized without a `completed` field), `!undefined` evaluates to `true`, silently creating an unexpected completed state.
-  - No optimistic UI rollback strategy. A failed save leaves the UI in an incorrect state with no automatic correction.
-  - The function is not covered by any unit tests, so a refactor could break toggle behavior without detection.
+  - **No error handling on save failure**: If `save()` fails (e.g., localStorage quota exceeded or unavailable), the function completes silently. The UI already reflects the toggled state, but the underlying data was never actually persisted. On the next page reload, the todo will revert to its previous state, confusing the user with no explanation.
+  - **No optimistic UI rollback**: In a server-backed version of this app, if the API call fails, there is no mechanism to revert the checkbox to its previous state. The UI remains inconsistent with the actual stored data until the user manually refreshes.
+  - **Missing `completedAt` timestamp**: No timestamp is recorded when a todo is marked as completed, and none is cleared when it is uncompleted. This makes it impossible to sort todos by completion time, display "completed at" information, or build any time-based analytics on top of the data.
+  - **No default value guard**: If `this.get('completed')` returns `undefined` because the model was initialized without a `completed` field in its `defaults`, then `!undefined` evaluates to `true`. This silently marks the todo as completed without the user taking any action, creating a subtle and hard-to-trace bug.
+  - **No unit test coverage**: The function has zero automated tests. Any future refactor — for example, adding the `completedAt` field or changing the persistence layer — could break the toggle behavior without any automated detection. The bug would only surface during manual UI testing.
+  - **No rate limiting or debounce**: If a user rapidly clicks the checkbox multiple times, each click triggers a separate `save()` call. These calls race against each other in localStorage, and the final persisted state may not match what the user intended.
 - **Improvements**:
-  - Add an error callback that rolls back the toggle on failure: re-save the previous value and display an error notification.
-  - Add a `completedAt` field: set to `new Date().toISOString()` when completing, and `null` when uncompleting.
-  - Define a default value in the model's `defaults` object: `defaults: { completed: false }` to guarantee the field is always a boolean.
-  - Write unit tests covering: toggling false to true, toggling true to false, and behavior when `completed` is undefined.
+  - **Add error handling with UI rollback**: Capture the previous value before toggling and restore it on failure:
+    ```javascript
+    toggle: function() {
+      var previousValue = this.get('completed');
+      this.save({ completed: !previousValue }, {
+        error: function(model) {
+          model.set('completed', previousValue);
+          alert('Failed to save. Please try again.');
+        }
+      });
+    }
+    ```
+  - **Record a `completedAt` timestamp**: Extend the save payload to include a timestamp field:
+    ```javascript
+    toggle: function() {
+      var isCompleted = !this.get('completed');
+      this.save({
+        completed: isCompleted,
+        completedAt: isCompleted ? new Date().toISOString() : null
+      });
+    }
+    ```
+  - **Add a default value in `model.defaults`**: Ensure `completed` is always a boolean by defining it in the model's defaults object: `defaults: { title: '', completed: false, completedAt: null }`. This prevents the `!undefined` edge case entirely.
+  - **Debounce rapid clicks**: Wrap the toggle logic in a debounce function to ignore duplicate calls within a short time window (e.g., 300ms), preventing race conditions from rapid checkbox clicking.
+  - **Write comprehensive unit tests**: Cover the following cases:
+    - Toggling from `false` to `true` persists `completed: true` and sets `completedAt` to a valid ISO string.
+    - Toggling from `true` to `false` persists `completed: false` and sets `completedAt` to `null`.
+    - A failed `save()` call restores the model to its previous `completed` value.
+    - Toggling when `completed` is `undefined` does not silently mark the todo as completed.
