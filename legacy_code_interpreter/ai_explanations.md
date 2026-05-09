@@ -1,88 +1,221 @@
-# AI Explanations of Complex Code Sections
+# AI Explanations of Complex Code
+## Project: `legacy_code_interpreter` — `holbertonschool-ai4devs`
 
-## Section 1 – `AppView.initialize()`
-
-- **Plain English**: Sets up the application on first load by storing DOM element references and registering event listeners for actions like adding, resetting, and filtering todos. Ends by fetching saved todos from localStorage.
-- **Pattern**: Event-driven initialization using Backbone's `listenTo`. The `'all'` event binding causes `render()` to fire on every internal collection event, including ones unrelated to the UI.
-- **Issues**:
-  - `listenTo(Todos, 'all', this.render)` triggers unnecessary re-renders on every Backbone internal event.
-  - `Todos.fetch()` has no error callback; silent failure if localStorage is unavailable.
-  - No null checks on DOM references; missing elements crash the app with no useful error.
-  - No debounce on render; rapid events trigger multiple full re-renders in quick succession.
-- **Improvements**:
-  - Replace `'all'` binding with specific targeted events (`'add'`, `'remove'`, `'change'`) to reduce unnecessary renders.
-  - Add an error callback to `Todos.fetch()` to inform the user when data cannot be loaded.
-  - Add null checks for every stored DOM reference and log descriptive warnings when elements are missing.
-  - Debounce the `render` function to batch rapid successive updates into a single render pass.
+> AI-generated plain-English explanations for complex legacy code sections,
+> including identified issues and recommended improvements.
 
 ---
 
-## Section 2 – `AppView.render()`
+## Section 1 – `Lexer.tokenize()`
 
-- **Plain English**: Updates the entire visible UI whenever the application state changes. Shows or hides the main area and footer based on whether todos exist, regenerates the footer HTML with current counts, highlights the active filter tab, and syncs the "toggle all" checkbox.
-- **Pattern**: Imperative jQuery DOM manipulation. The full footer innerHTML is replaced on every call using a template function, regardless of whether values have changed.
+```python
+def tokenize(self, source):
+    tokens = []
+    i = 0
+    while i < len(source):
+        if source[i].isspace():
+            i += 1
+        elif source[i].isdigit():
+            j = i
+            while j < len(source) and source[j].isdigit():
+                j += 1
+            tokens.append(('NUMBER', int(source[i:j])))
+            i = j
+        elif source[i].isalpha():
+            j = i
+            while j < len(source) and source[j].isalnum():
+                j += 1
+            word = source[i:j]
+            tokens.append(('KEYWORD' if word in KEYWORDS else 'IDENT', word))
+            i = j
+        elif source[i] in '+-*/=(){};':
+            tokens.append(('OP', source[i]))
+            i += 1
+        else:
+            raise SyntaxError(f"Unknown character: {source[i]}")
+    return tokens
+```
+
+- **Plain English**: This function reads through source code character by character and breaks it into a list of tokens (numbers, keywords, identifiers, operators). It's the first step of the interpreter — turning raw text into meaningful chunks the parser can understand.
+- **Pattern**: Manual character-by-character scanning using nested `while` loops. A classic hand-rolled lexer approach.
 - **Issues**:
-  - Full footer HTML replacement destroys and recreates DOM nodes unnecessarily on every render.
-  - `Todos.completed()` and `Todos.remaining()` are each called independently with no shared cache, causing redundant collection iterations.
-  - Filter selector uses raw string concatenation: special characters in the filter value produce invalid CSS selectors and runtime errors.
-  - No guard to skip rendering when state is unchanged, causing DOM thrashing on every collection event.
+  - No support for string literals or comments.
+  - Float numbers (e.g., `3.14`) are not handled — the lexer only reads integers.
+  - `SyntaxError` is raised without line/column information, making debugging difficult.
+  - `KEYWORDS` set is referenced but not defined inside the function — relies on a global.
 - **Improvements**:
-  - Introduce dirty-checking: compare new counts to previously rendered values and skip the render if nothing changed.
-  - Replace full innerHTML replacement with targeted updates to individual text nodes displaying the counts.
-  - Sanitize or encode the filter value before using it in a CSS attribute selector.
-  - Cache `completed()` and `remaining()` results at the collection level and invalidate on relevant events only.
+  - Use Python's `re` module with compiled regex patterns for cleaner, more maintainable tokenization.
+  - Add line and column tracking to error messages.
+  - Support floats, strings, and single-line comments (`#`).
+  - Replace the global `KEYWORDS` dependency with a parameter or class attribute.
 
 ---
 
-## Section 3 – `Todos.completed()` and `Todos.remaining()`
+## Section 2 – `Parser.parse_expression()`
 
-- **Plain English**: `completed()` returns all todos marked as done by filtering the full collection. `remaining()` returns all todos that are not done by removing the completed ones from the full list. Both are called on every render cycle to calculate counts and apply view filters.
-- **Pattern**: Functional collection filtering via Underscore.js `filter` and `without`. `remaining()` implicitly depends on `completed()`, creating a hidden coupling between the two methods.
+```python
+def parse_expression(self):
+    left = self.parse_term()
+    while self.current_token and self.current_token[0] == 'OP' \
+            and self.current_token[1] in ('+', '-'):
+        op = self.current_token[1]
+        self.advance()
+        right = self.parse_term()
+        left = ('BINOP', op, left, right)
+    return left
+
+def parse_term(self):
+    left = self.parse_factor()
+    while self.current_token and self.current_token[0] == 'OP' \
+            and self.current_token[1] in ('*', '/'):
+        op = self.current_token[1]
+        self.advance()
+        right = self.parse_factor()
+        left = ('BINOP', op, left, right)
+    return left
+```
+
+- **Plain English**: This is a recursive descent parser that handles mathematical operator precedence. `parse_term()` handles `*` and `/` first (higher precedence), while `parse_expression()` handles `+` and `-` second (lower precedence). Together they ensure `2 + 3 * 4` is evaluated as `2 + (3 * 4) = 14`, not `(2 + 3) * 4 = 20`.
+- **Pattern**: Classic recursive descent parsing with operator precedence encoded through function call hierarchy.
 - **Issues**:
-  - Both functions iterate the full collection on every call with no memoization, becoming expensive as the list grows.
-  - `this.without.apply(this, this.completed())` spreads the completed array as individual arguments; for very large lists this exceeds the JavaScript engine's argument limit and throws a runtime error.
-  - The implicit dependency of `remaining()` on `completed()` is undocumented; refactoring one silently breaks the other.
-  - Neither function has unit tests; filtering regressions are only caught by manual UI testing.
+  - No error recovery — if the token stream is malformed, the parser crashes immediately.
+  - Operator precedence is hardcoded across two functions; adding new operators (e.g., `**`, `%`) requires modifying multiple methods.
+  - No support for unary operators like `-5` or `+x`.
+  - `advance()` is called without checking for end-of-input in all branches.
 - **Improvements**:
-  - Add memoization: cache results and invalidate only on `add`, `remove`, or `change:completed` collection events.
-  - Rewrite `remaining()` as an independent explicit filter to eliminate the implicit dependency and the unsafe `apply` spread: `return this.filter(function(todo) { return !todo.get('completed'); });`
-  - Add JSDoc comments explicitly documenting return types and the dependency relationship.
-  - Write unit tests for: empty collection, all completed, none completed, and mixed states.
+  - Introduce a Pratt parser or precedence table to handle operator precedence dynamically.
+  - Add explicit end-of-input checks and meaningful parse error messages.
+  - Add support for unary operators in `parse_factor()`.
+  - Consider building an AST node class instead of raw tuples for better readability and extensibility.
 
 ---
 
-## Section 4 – `TodoView.close()`
+## Section 3 – `Interpreter.evaluate()`
 
-- **Plain English**: Runs when a user finishes editing a todo by pressing Enter or clicking away. Reads the input, trims whitespace, and either saves the updated title or deletes the todo if the field is empty. Always removes the visual editing style from the item at the end.
-- **Pattern**: Save-or-delete logic gated on a single truthy check of the trimmed input value. Editing state managed by toggling a CSS class on the element.
+```python
+def evaluate(self, node):
+    if node[0] == 'NUMBER':
+        return node[1]
+    elif node[0] == 'IDENT':
+        if node[1] not in self.env:
+            raise NameError(f"Undefined variable: {node[1]}")
+        return self.env[node[1]]
+    elif node[0] == 'BINOP':
+        left = self.evaluate(node[2])
+        right = self.evaluate(node[3])
+        if node[1] == '+': return left + right
+        elif node[1] == '-': return left - right
+        elif node[1] == '*': return left * right
+        elif node[1] == '/': return left / right
+    elif node[0] == 'ASSIGN':
+        val = self.evaluate(node[2])
+        self.env[node[1]] = val
+        return val
+```
+
+- **Plain English**: This is the tree-walking evaluator — the heart of the interpreter. It takes an AST node, figures out what kind of node it is (a number, a variable, an operation, an assignment), and computes the result. It calls itself recursively on sub-nodes to evaluate nested expressions.
+- **Pattern**: Tree-walking interpreter using if-elif chains on tuple tags (node types).
 - **Issues**:
-  - No maximum length validation; users can paste arbitrarily long strings that break the UI layout.
-  - `model.save()` has no error callback; failed saves are invisible to the user.
-  - Deleting the todo on empty input is a destructive action easily triggered by accidentally clearing the field, with no confirmation or undo.
-  - No comparison of new title to existing title before saving; unnecessary localStorage writes occur on every blur even when nothing changed.
-  - `removeClass('editing')` is called unconditionally even on save failure, hiding the editing state before confirming success.
+  - Division by zero is not handled — `1 / 0` will crash with an unhandled `ZeroDivisionError`.
+  - The function returns `None` implicitly if a node type is not matched (e.g., unknown `node[0]`), which causes silent bugs downstream.
+  - Using raw tuples with positional indexing (e.g., `node[2]`, `node[3]`) is fragile — a mismatched node shape causes a confusing `IndexError`.
+  - No support for boolean expressions, comparison operators, or control flow nodes.
 - **Improvements**:
-  - Add a maximum length check (e.g., 200 characters) with a visible counter and warning.
-  - Add an error callback to `model.save()` that keeps the item in editing mode and shows an error message.
-  - Compare `trimmedValue` to `this.model.get('title')` and skip the save if the value is unchanged.
-  - Add a brief undo window (e.g., a toast with an "Undo" button) before permanently deleting a todo due to an empty field.
-  - Only call `removeClass('editing')` after confirming the save completed successfully.
+  - Add explicit division-by-zero check with a clear runtime error message.
+  - Add a `default` else clause that raises `RuntimeError: Unknown AST node type`.
+  - Replace tuple-based AST nodes with dataclasses or named tuples for safer, more readable access (e.g., `node.left` instead of `node[2]`).
+  - Use a dispatch dictionary (`{node_type: handler_func}`) instead of if-elif chains for scalability.
 
 ---
 
-## Section 5 – `TodoModel.toggle()`
+## Section 4 – `Interpreter.run_program()`
 
-- **Plain English**: Switches a todo between completed and not completed by reading the current boolean value of the `completed` field, flipping it, and immediately saving the result to localStorage. Called every time a user clicks the checkbox next to a todo item. Despite its small size, it has several hidden reliability and data quality problems that only surface under failure conditions or edge cases.
-- **Pattern**: Simple boolean toggle with immediate synchronous persistence via Backbone's `save`. No intermediate state management, no optimistic update handling, and no side effects beyond the single save call.
+```python
+def run_program(self, statements):
+    result = None
+    for stmt in statements:
+        if stmt[0] == 'IF':
+            cond = self.evaluate(stmt[1])
+            if cond:
+                for s in stmt[2]:
+                    result = self.evaluate(s)
+            else:
+                if len(stmt) > 3:
+                    for s in stmt[3]:
+                        result = self.evaluate(s)
+        elif stmt[0] == 'WHILE':
+            while self.evaluate(stmt[1]):
+                for s in stmt[2]:
+                    result = self.evaluate(s)
+        else:
+            result = self.evaluate(stmt)
+    return result
+```
+
+- **Plain English**: This function runs a list of statements one by one. It handles `if/else` conditionals and `while` loops by checking conditions and executing the relevant code blocks. For anything else, it delegates to `evaluate()`. It's essentially the program's main execution loop.
+- **Pattern**: Flat statement executor with inline control flow handling using if-elif.
 - **Issues**:
-  - No error handling on save failure; the UI shows the toggled state even if localStorage never persisted it, causing a silent mismatch that reverts on the next page reload.
-  - No optimistic UI rollback; a failed save leaves the checkbox in the wrong visual state with no automatic correction.
-  - No `completedAt` timestamp is recorded or cleared, making it impossible to sort by completion time or display when a todo was finished.
-  - If `this.get('completed')` returns `undefined` (model initialized without a default), `!undefined` evaluates to `true` and silently marks the todo as completed without user action.
-  - Rapid checkbox clicks fire multiple concurrent `save()` calls that race against each other; the final persisted state may not match the user's intent.
+  - `WHILE` loops have no iteration limit — an infinite loop (e.g., `while 1:`) will hang the interpreter with no way to break out.
+  - `IF` statement checks `len(stmt) > 3` to detect an `else` branch — this is fragile and unclear. A missing `else` and a malformed `if` node look identical.
+  - No support for `break`, `continue`, or `return` statements.
+  - All control flow is handled inside one function, making it hard to extend (e.g., adding `for` loops or `try/except`).
 - **Improvements**:
-  - Add an error callback that captures the previous value and restores it on failure: `this.save({ completed: !prev }, { error: function(model) { model.set('completed', prev); } })`.
-  - Record a `completedAt` timestamp when completing and clear it when uncompleting: `completedAt: isCompleted ? new Date().toISOString() : null`.
-  - Define `completed: false` in the model's `defaults` object to guarantee the field is always a boolean and prevent the `!undefined` edge case.
-  - Debounce the toggle function with a short window (e.g., 300ms) to prevent race conditions from rapid successive clicks.
-  - Write unit tests for: toggling false to true, toggling true to false, save failure triggering rollback, and behavior when `completed` is `undefined`.
+  - Add a maximum loop iteration counter or timeout guard to prevent infinite loops.
+  - Use dedicated AST node classes with named fields (`node.condition`, `node.body`, `node.else_body`) instead of positional tuple access.
+  - Separate control flow handling into dedicated methods (`execute_if`, `execute_while`) for clarity.
+  - Implement a `Signal` or `ControlFlow` exception pattern to support `break`/`return`/`continue`.
+
+---
+
+## Section 5 – `Environment` (Variable Scope)
+
+```python
+class Environment:
+    def __init__(self, parent=None):
+        self.vars = {}
+        self.parent = parent
+
+    def get(self, name):
+        if name in self.vars:
+            return self.vars[name]
+        elif self.parent:
+            return self.parent.get(name)
+        else:
+            raise NameError(f"Variable '{name}' is not defined")
+
+    def set(self, name, value):
+        self.vars[name] = value
+
+    def assign(self, name, value):
+        if name in self.vars:
+            self.vars[name] = value
+        elif self.parent:
+            self.parent.assign(name, value)
+        else:
+            raise NameError(f"Cannot assign to undefined variable '{name}'")
+```
+
+- **Plain English**: This class manages variable storage and scope. Each function call or block gets its own `Environment` that has a link to its parent (outer) scope. When you look up a variable, it first checks the local scope, then walks up through parent scopes until it finds it — just like how Python itself resolves variable names.
+- **Pattern**: Linked-list scope chain (lexical scoping). A well-known and correct pattern for implementing closures and nested scopes.
+- **Issues**:
+  - `set()` always creates or overwrites in the **local** scope, even if the variable was defined in a parent scope. This breaks re-assignment of outer variables (there is no equivalent of Python's `nonlocal`).
+  - `assign()` raises a `NameError` when trying to assign to an undeclared variable, but there's no `declare()` method to explicitly introduce a new variable — `set()` and `assign()` have overlapping but inconsistent responsibilities.
+  - Recursive `get()` and `assign()` can hit Python's recursion limit in deeply nested scopes.
+  - No support for read-only/constant bindings.
+- **Improvements**:
+  - Rename `set()` to `define()` to make it clear it creates a new local binding.
+  - Clarify the `set` vs `assign` distinction in documentation or refactor into a single method with a `local_only` flag.
+  - Add an iterative (loop-based) scope lookup to avoid deep recursion issues.
+  - Consider adding a `constants` set to support immutable variable declarations.
+
+---
+
+## Summary Table
+
+| Section | Function / Class | Main Issue | Priority Fix |
+|---|---|---|---|
+| 1 | `Lexer.tokenize()` | No float/string support, poor error messages | Use `re` module + line tracking |
+| 2 | `Parser.parse_expression()` | Hardcoded precedence, no unary ops | Pratt parser or precedence table |
+| 3 | `Interpreter.evaluate()` | Silent `None` returns, division by zero | Default error case + dataclass AST nodes |
+| 4 | `Interpreter.run_program()` | Infinite loop risk, fragile tuple access | Loop guard + dedicated execute methods |
+| 5 | `Environment` | `set()` vs `assign()` inconsistency | Rename to `define()` + iterative lookup |
