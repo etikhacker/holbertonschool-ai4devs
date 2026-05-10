@@ -19,19 +19,13 @@ As a student, I want to view all assignments for my enrolled classes so that I c
 As a teacher, I want to record a numeric grade for each student's assignment submission so that students receive accurate and timely feedback on their performance.
 
 ## User Story 7
-As a student, I want to view my grades for each assignment in each class so that I can track my academic progress and identify areas where I need to improve.
+As a student, I want to view my grades for each assignment so that I can track my academic progress and identify areas where I need to improve.
 
 ## User Story 8
-As a teacher, I want to mark attendance for each class session so that I have an accurate record of student participation.
+As a teacher, I want to mark attendance for each class session so that I have an accurate record of student participation throughout the course.
 
 ## User Story 9
-As a student, I want to view my attendance record for each class so that I can monitor my participation and take action if I am at risk of missing too many sessions.
+As a student, I want to view my attendance record for each class so that I can monitor my participation and act before missing too many sessions.
 
 ## User Story 10
-As an admin, I want to manage all user accounts so that I can deactivate inactive users and resolve access issues quickly.
-
-## User Story 11
 As a teacher, I want to edit or delete an assignment so that I can correct mistakes or remove outdated tasks before students submit their work.
-
-## User Story 12
-As a student, I want to receive a notification when a new assignment is posted so that I am always aware of upcoming deadlines without having to check manually.
