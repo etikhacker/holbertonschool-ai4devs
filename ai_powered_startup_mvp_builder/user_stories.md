@@ -1,32 +1,25 @@
-# User Stories
-## AI-Powered Job Application Assistant MVP
+# User Stories - Smart Task Prioritizer
 
 ## User Story 1
-As a job seeker, I want to create an account so that I can save my resumes and job applications securely.
+As a user, I want to add a new task with a title and a deadline so that I can keep track of my upcoming work.
 
 ## User Story 2
-As a job seeker, I want to upload my resume so that the AI can analyze it and suggest improvements.
+As a student, I want to assign an effort level from 1 to 5 to each task so that the system can calculate its complexity.
 
 ## User Story 3
-As a job seeker, I want to paste a job description so that the AI can generate a tailored cover letter for that role.
+As a busy professional, I want the system to automatically rank my tasks by priority so that I know exactly what to work on first.
 
 ## User Story 4
-As a job seeker, I want to see an AI-generated match score between my resume and a job posting so that I can decide which jobs to prioritize.
+As a disorganized user, I want to group my tasks into categories so that I can filter my workload based on context.
 
 ## User Story 5
-As a job seeker, I want to save a job application with a status so that I can track where I am in each hiring process.
+As a visual learner, I want to view my tasks in a Kanban board layout so that I can track my progress through different stages.
 
 ## User Story 6
-As a job seeker, I want to update the status of a saved application so that my tracker reflects the latest stage of each application.
+As a project manager, I want to drag and drop tasks between columns so that I can update their completion status quickly.
 
 ## User Story 7
-As a job seeker, I want to receive AI-generated interview questions based on a job description so that I can prepare effectively before my interview.
+As a privacy-conscious user, I want my data to be stored locally in the browser so that my personal tasks remain private and accessible offline.
 
 ## User Story 8
-As a job seeker, I want to view all my saved applications in a dashboard so that I can see my progress at a glance.
-
-## User Story 9
-As a job seeker, I want to edit a saved resume so that I can keep my profile up to date as I gain new skills and experience.
-
-## User Story 10
-As a job seeker, I want to delete a job application I no longer need so that my tracker stays clean and relevant.
+As a power user, I want to export my task list to a CSV file so that I can analyze my productivity in other spreadsheet tools.
