@@ -1,31 +1,32 @@
 # User Stories
+## AI-Powered Job Application Assistant MVP
 
 ## User Story 1
-As a student, I want to register an account with my email and password so that I can securely access the platform and its features.
+As a job seeker, I want to register an account with my email and password so that I can securely save my profile and track my job applications.
 
 ## User Story 2
-As a student, I want to log in to my account so that I can view my classes, assignments, and grades from any device.
+As a job seeker, I want to upload my resume so that the AI can analyze it and suggest improvements to increase my chances of getting hired.
 
 ## User Story 3
-As a teacher, I want to create a new class with a name and description so that I can organize my students into groups and manage their coursework in one place.
+As a job seeker, I want to paste a job description so that the AI can generate a tailored cover letter matching my skills to the role.
 
 ## User Story 4
-As a teacher, I want to add assignments to a class with a title, description, and due date so that students clearly understand what work is expected and when it is due.
+As a job seeker, I want to receive an AI-generated match score between my resume and a job posting so that I can prioritize which jobs to apply for.
 
 ## User Story 5
-As a student, I want to view all assignments for my enrolled classes so that I can plan my work schedule and avoid missing deadlines.
+As a job seeker, I want to save job applications with their status (applied, interview, rejected, offer) so that I can track my progress in one place.
 
 ## User Story 6
-As a teacher, I want to record a numeric grade for each student's assignment submission so that students receive accurate and timely feedback on their performance.
+As a job seeker, I want to receive AI-powered suggestions to improve weak sections of my resume so that I can present myself more effectively to employers.
 
 ## User Story 7
-As a student, I want to view my grades for each assignment so that I can track my academic progress and identify areas where I need to improve.
+As a job seeker, I want to generate a customized resume version for a specific job posting so that my application stands out from generic submissions.
 
 ## User Story 8
-As a teacher, I want to mark attendance for each class session so that I have an accurate record of student participation throughout the course.
+As a job seeker, I want to view a dashboard summarizing all my active applications and their statuses so that I can stay organized during my job search.
 
 ## User Story 9
-As a student, I want to view my attendance record for each class so that I can monitor my participation and act before missing too many sessions.
+As a job seeker, I want to receive interview preparation tips based on the job description so that I can practice relevant questions before my interview.
 
 ## User Story 10
-As a teacher, I want to edit or delete an assignment so that I can correct mistakes or remove outdated tasks before students submit their work.
+As a job seeker, I want to log in and access my saved resumes and applications so that I can continue my job search from any device at any time.

@@ -1,7 +1,8 @@
 # System Architecture
+## AI-Powered Job Application Assistant MVP
 
 ## Overview
-This document describes the high-level architecture of the AI-Powered Student Management MVP. The system follows a three-tier client-server architecture consisting of a frontend client, a backend REST API, and a relational database.
+This document describes the high-level architecture of the AI-Powered Job Application Assistant. The system follows a three-tier architecture: a React frontend, a Node.js REST API backend, and a PostgreSQL database. An external AI service (OpenAI API) is integrated to power resume analysis, cover letter generation, and interview preparation features.
 
 ---
 
@@ -9,47 +10,47 @@ This document describes the high-level architecture of the AI-Powered Student Ma
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                        CLIENT LAYER                      │
+│                      CLIENT LAYER                        │
 │                                                         │
-│   ┌─────────────────┐        ┌──────────────────────┐  │
-│   │   Web Browser   │        │    Mobile Browser    │  │
-│   │  (React / HTML) │        │   (Responsive UI)    │  │
-│   └────────┬────────┘        └──────────┬───────────┘  │
-│            │                            │               │
-└────────────┼────────────────────────────┼───────────────┘
-             │         HTTPS              │
-             ▼                            ▼
-┌─────────────────────────────────────────────────────────┐
-│                      API LAYER                           │
-│                                                         │
-│   ┌─────────────────────────────────────────────────┐  │
-│   │              REST API (Node.js / Express)        │  │
-│   │                                                  │  │
-│   │  ┌───────────┐  ┌───────────┐  ┌─────────────┐ │  │
-│   │  │   Auth    │  │  Classes  │  │ Assignments │ │  │
-│   │  │  Module   │  │  Module   │  │   Module    │ │  │
-│   │  └───────────┘  └───────────┘  └─────────────┘ │  │
-│   │                                                  │  │
-│   │  ┌───────────┐  ┌───────────┐                   │  │
-│   │  │  Grades   │  │Attendance │                   │  │
-│   │  │  Module   │  │  Module   │                   │  │
-│   │  └───────────┘  └───────────┘                   │  │
-│   └─────────────────────────────────────────────────┘  │
-│                                                         │
-└────────────────────────────┬────────────────────────────┘
-                             │
-                             ▼
-┌─────────────────────────────────────────────────────────┐
-│                     DATA LAYER                           │
-│                                                         │
-│   ┌──────────────────────────────────────────────────┐ │
-│   │           Relational Database (PostgreSQL)        │ │
-│   │                                                   │ │
-│   │   Users │ Classes │ Assignments │ Grades │        │ │
-│   │                          Attendance               │ │
-│   └──────────────────────────────────────────────────┘ │
-│                                                         │
+│        ┌────────────────────────────────────┐          │
+│        │     Web App (React / Tailwind CSS) │          │
+│        │  Dashboard │ Resume │ Cover Letter │          │
+│        └──────────────────┬─────────────────┘          │
 └─────────────────────────────────────────────────────────┘
+                            │ HTTPS / REST
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                       API LAYER                          │
+│                                                         │
+│        ┌────────────────────────────────────┐          │
+│        │     REST API (Node.js / Express)   │          │
+│        │                                    │          │
+│        │  ┌──────────┐  ┌────────────────┐ │          │
+│        │  │   Auth   │  │ Resume Module  │ │          │
+│        │  │  Module  │  │ (upload/parse) │ │          │
+│        │  └──────────┘  └────────────────┘ │          │
+│        │                                    │          │
+│        │  ┌──────────┐  ┌────────────────┐ │          │
+│        │  │  Cover   │  │  Application   │ │          │
+│        │  │  Letter  │  │    Tracker     │ │          │
+│        │  │  Module  │  │    Module      │ │          │
+│        │  └──────────┘  └────────────────┘ │          │
+│        └───────────────────┬────────────────┘          │
+└────────────────────────────┼────────────────────────────┘
+                             │
+              ┌──────────────┴──────────────┐
+              ▼                             ▼
+┌─────────────────────┐       ┌─────────────────────────┐
+│    DATA LAYER        │       │     AI SERVICE LAYER    │
+│                      │       │                         │
+│  PostgreSQL Database │       │   OpenAI API (GPT-4)   │
+│  ┌────────────────┐ │       │  - Resume analysis      │
+│  │ Users          │ │       │  - Cover letter gen     │
+│  │ Resumes        │ │       │  - Match scoring        │
+│  │ Applications   │ │       │  - Interview tips       │
+│  │ CoverLetters   │ │       └─────────────────────────┘
+│  └────────────────┘ │
+└──────────────────────┘
 ```
 
 ---
@@ -57,19 +58,19 @@ This document describes the high-level architecture of the AI-Powered Student Ma
 ## Component Descriptions
 
 ### Client Layer
-- **Web Browser**: The primary user interface built with React. Students, teachers, and admins interact with the system through this interface.
-- **Mobile Browser**: A responsive version of the web UI accessible from mobile devices without requiring a native app.
+- **Web App (React)**: Single-page application where users manage resumes, generate cover letters, track applications, and view AI suggestions.
 
 ### API Layer
-- **REST API (Node.js / Express)**: Handles all business logic and serves data to the client. Organized into modules by feature area.
-- **Auth Module**: Manages user registration, login, logout, and JWT token validation.
-- **Classes Module**: Handles creation, retrieval, update, and deletion of classes.
-- **Assignments Module**: Manages assignment creation, listing, and deadline tracking per class.
-- **Grades Module**: Records and retrieves grades per student per assignment.
-- **Attendance Module**: Records and retrieves attendance status per student per class session.
+- **Auth Module**: Handles registration, login, and JWT-based session management.
+- **Resume Module**: Accepts resume file uploads, extracts text, and sends content to the AI service for analysis.
+- **Cover Letter Module**: Accepts a job description and resume content, sends both to the AI service, and returns a tailored cover letter.
+- **Application Tracker Module**: Manages CRUD operations for saved job applications and their statuses.
 
 ### Data Layer
-- **PostgreSQL Database**: Stores all persistent data including users, classes, assignments, grades, and attendance records. Relational structure ensures referential integrity across all entities.
+- **PostgreSQL**: Stores all user data, uploaded resumes, generated cover letters, and application tracking records.
+
+### AI Service Layer
+- **OpenAI API (GPT-4)**: Powers all AI features including resume improvement suggestions, cover letter generation, job match scoring, and interview preparation tips.
 
 ---
 
@@ -77,8 +78,8 @@ This document describes the high-level architecture of the AI-Powered Student Ma
 
 | Decision | Choice | Reason |
 |---|---|---|
-| API style | REST | Simple, widely understood, easy to test |
-| Authentication | JWT tokens | Stateless, scalable, no server-side session storage |
-| Database | PostgreSQL | Strong relational support, ACID compliance |
-| Frontend | React | Component-based, easy to scale UI |
-| Hosting | Cloud (e.g., Render / Railway) | Free tiers available for MVP deployment |
+| AI Provider | OpenAI GPT-4 | Best-in-class language understanding for resume and job description analysis |
+| API Style | REST | Simple, well-understood, easy to test and extend |
+| Authentication | JWT | Stateless and scalable |
+| Database | PostgreSQL | Relational integrity for user-resume-application relationships |
+| Frontend | React | Fast, component-based UI suitable for a dashboard-heavy app |
