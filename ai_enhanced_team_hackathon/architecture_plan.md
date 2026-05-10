@@ -1,100 +1,256 @@
 # Architecture Plan
-## AI Study Plan Generator
 
-## Overview
-The AI Study Plan Generator follows a three-tier architecture: a React frontend, a Node.js REST API backend, and a PostgreSQL database. An external AI service (OpenAI API) is integrated to generate personalized study schedules and subject-specific study tips.
+## Project: AI-Enhanced Team Collaboration Platform
 
 ---
 
-## System Diagram
+## 1. Overview
+
+This document describes the high-level architecture for an AI-Enhanced Team Collaboration Platform — a web application that enables teams to manage projects and tasks, communicate in context, and leverage AI-powered features such as task description improvement, project summarization, and sprint planning recommendations.
+
+The system follows a **client-server architecture** with a decoupled frontend, a RESTful backend API, a relational database, and integration with an external AI provider (Anthropic Claude API).
+
+---
+
+## 2. Architecture Style
+
+**Pattern:** Monolithic Backend with Service Separation (modular monolith)
+
+This approach is chosen for hackathon-scale development speed while keeping the codebase organized enough to extract microservices later if needed.
+
+- **Frontend:** Single Page Application (SPA)
+- **Backend:** REST API server (Node.js / Express)
+- **AI Layer:** Dedicated service module within the backend that interfaces with the Anthropic Claude API
+- **Database:** PostgreSQL (relational)
+- **Real-time:** WebSockets for live notifications
+- **Auth:** JWT-based stateless authentication
+
+---
+
+## 3. High-Level Component Diagram
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│                      CLIENT LAYER                         │
-│                                                          │
-│       ┌──────────────────────────────────────────┐      │
-│       │         Web App (React / Tailwind)        │      │
-│       │  Dashboard │ Plan Generator │ Progress    │      │
-│       └─────────────────────┬────────────────────┘      │
-└─────────────────────────────────────────────────────────-┘
-                              │ HTTPS / REST
-                              ▼
-┌──────────────────────────────────────────────────────────┐
-│                       API LAYER                           │
-│                                                          │
-│       ┌──────────────────────────────────────────┐      │
-│       │       REST API (Node.js / Express)        │      │
-│       │                                           │      │
-│       │  ┌───────────┐  ┌──────────────────────┐ │      │
-│       │  │   Auth    │  │  Study Plan Module   │ │      │
-│       │  │  Module   │  │  (generate / CRUD)   │ │      │
-│       │  └───────────┘  └──────────────────────┘ │      │
-│       │                                           │      │
-│       │  ┌───────────┐  ┌──────────────────────┐ │      │
-│       │  │  Progress │  │    AI Integration    │ │      │
-│       │  │  Module   │  │       Module         │ │      │
-│       │  └───────────┘  └──────────────────────┘ │      │
-│       └──────────────────────┬────────────────────┘      │
-└─────────────────────────────────────────────────────────-┘
-                               │
-               ┌───────────────┴───────────────┐
-               ▼                               ▼
-┌──────────────────────┐         ┌─────────────────────────┐
-│      DATA LAYER       │         │     AI SERVICE LAYER    │
-│                       │         │                         │
-│  PostgreSQL Database  │         │   OpenAI API (GPT-4o)  │
-│  ┌─────────────────┐ │         │  - Study plan generation│
-│  │ Users           │ │         │  - Subject study tips   │
-│  │ StudyPlans      │ │         │  - Schedule optimization│
-│  │ Subjects        │ │         └─────────────────────────┘
-│  │ Topics          │ │
-│  └─────────────────┘ │
-└───────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                        CLIENT LAYER                         │
+│                                                             │
+│   ┌──────────────────────────────────────────────────┐      │
+│   │         React SPA (Vite + TailwindCSS)           │      │
+│   │  - Dashboard / Projects / Tasks / Notifications  │      │
+│   │  - AI-powered UI components (summaries, hints)   │      │
+│   └────────────────────┬─────────────────────────────┘      │
+└────────────────────────┼────────────────────────────────────┘
+                         │ HTTPS / WebSocket
+┌────────────────────────▼────────────────────────────────────┐
+│                       API LAYER                             │
+│                                                             │
+│   ┌──────────────────────────────────────────────────┐      │
+│   │          Node.js / Express REST API              │      │
+│   │                                                  │      │
+│   │  ┌──────────┐  ┌──────────┐  ┌───────────────┐  │      │
+│   │  │  Auth    │  │ Projects │  │     Tasks      │  │      │
+│   │  │ Module   │  │ Module   │  │    Module      │  │      │
+│   │  └──────────┘  └──────────┘  └───────────────┘  │      │
+│   │  ┌──────────┐  ┌──────────┐  ┌───────────────┐  │      │
+│   │  │Comments  │  │Notif.    │  │   AI Service  │  │      │
+│   │  │ Module   │  │ Module   │  │    Module     │  │      │
+│   │  └──────────┘  └──────────┘  └──────┬────────┘  │      │
+│   └─────────────────────────────────────┼────────────┘      │
+└─────────────────────────────────────────┼────────────────────┘
+                                          │ HTTPS
+                              ┌───────────▼──────────┐
+                              │  Anthropic Claude API │
+                              │  (claude-sonnet-4)    │
+                              └──────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                      DATA LAYER                             │
+│                                                             │
+│   ┌──────────────────────────────────────────────────┐      │
+│   │              PostgreSQL Database                 │      │
+│   │  Users | Projects | Tasks | Comments | Notifs   │      │
+│   └──────────────────────────────────────────────────┘      │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Component Descriptions
+## 4. Frontend Architecture
 
-### Client Layer
-- **Web App (React)**: Single-page application where students input their subjects, exam dates, and available hours, then view and interact with their AI-generated study plan.
+**Technology:** React 18 + Vite + TailwindCSS
 
-### API Layer
-- **Auth Module**: Handles user registration, login, logout, and JWT token validation.
-- **Study Plan Module**: Manages creation, retrieval, update, and deletion of study plans, subjects, and topics.
-- **Progress Module**: Handles marking topics as completed and retrieving progress statistics per plan.
-- **AI Integration Module**: Sends student inputs (subjects, dates, hours) to the OpenAI API and parses the structured response into study plan data.
+### Structure
+```
+src/
+├── components/         # Reusable UI components (Button, Card, Modal)
+├── pages/              # Route-level page components
+│   ├── Dashboard.jsx
+│   ├── ProjectView.jsx
+│   ├── TaskView.jsx
+│   └── Login.jsx
+├── features/           # Feature slices (auth, projects, tasks, ai)
+├── hooks/              # Custom React hooks
+├── services/           # API client functions (axios)
+├── store/              # Global state (Zustand or React Context)
+└── utils/              # Helpers and formatters
+```
 
-### Data Layer
-- **PostgreSQL**: Stores all persistent data including user accounts, study plans, subjects, and individual topics with their completion status.
-
-### AI Service Layer
-- **OpenAI API (GPT-4o)**: Receives subject names, exam dates, priority levels, and available hours. Returns a structured day-by-day study schedule and subject-specific study tips.
-
----
-
-## API Endpoints
-
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/auth/register` | Register a new user |
-| POST | `/auth/login` | Log in and receive JWT token |
-| GET | `/plans` | Get all study plans for the logged-in user |
-| POST | `/plans` | Create a new study plan (triggers AI generation) |
-| GET | `/plans/:id` | Get a specific study plan with subjects and topics |
-| DELETE | `/plans/:id` | Delete a study plan |
-| PATCH | `/topics/:id/complete` | Mark a topic as completed |
-| POST | `/plans/:id/regenerate` | Regenerate the plan with updated inputs |
+### Key Design Decisions
+- **Routing:** React Router v6 with protected routes for authenticated users
+- **State Management:** Zustand for lightweight global state (user session, notifications)
+- **API Communication:** Axios with interceptors for JWT token injection and error handling
+- **Real-time:** WebSocket client (native or Socket.IO) for live notification updates
+- **AI UX:** AI features are non-blocking; results render asynchronously with loading states
 
 ---
 
-## Key Design Decisions
+## 5. Backend Architecture
 
-| Decision | Choice | Reason |
-|---|---|---|
-| AI Provider | OpenAI GPT-4o | Best quality for structured schedule generation |
-| API Style | REST | Simple, well-understood, easy to test |
-| Authentication | JWT | Stateless and scalable |
-| Database | PostgreSQL | Relational structure suits hierarchical plan data |
-| Frontend | React + Tailwind | Fast UI development with responsive design |
-| Hosting | Railway / Render | Free tiers suitable for MVP deployment |
+**Technology:** Node.js + Express.js
+
+### Structure
+```
+src/
+├── routes/             # Express route definitions
+│   ├── auth.js
+│   ├── projects.js
+│   ├── tasks.js
+│   ├── comments.js
+│   └── notifications.js
+├── controllers/        # Request handlers (thin layer)
+├── services/           # Business logic
+│   ├── authService.js
+│   ├── projectService.js
+│   ├── taskService.js
+│   └── aiService.js    # AI integration logic
+├── models/             # Database query functions (no ORM or Sequelize)
+├── middleware/         # Auth guard, error handler, rate limiter
+├── websocket/          # WebSocket server and event handlers
+└── config/             # Environment config, DB pool, constants
+```
+
+### API Design (REST)
+
+| Method | Endpoint                          | Description                        |
+|--------|-----------------------------------|------------------------------------|
+| POST   | `/api/auth/register`              | Register new user                  |
+| POST   | `/api/auth/login`                 | Log in, receive JWT                |
+| GET    | `/api/projects`                   | List user's projects               |
+| POST   | `/api/projects`                   | Create a project                   |
+| GET    | `/api/projects/:id`               | Get project details                |
+| POST   | `/api/projects/:id/tasks`         | Create a task in a project         |
+| PATCH  | `/api/tasks/:id`                  | Update task (status, assignee...)  |
+| POST   | `/api/tasks/:id/comments`         | Add a comment                      |
+| GET    | `/api/notifications`              | Get user notifications             |
+| PATCH  | `/api/notifications/read`         | Mark notifications as read         |
+| POST   | `/api/ai/summarize/:projectId`    | Generate AI project summary        |
+| POST   | `/api/ai/improve-task/:taskId`    | AI-improve a task description      |
+| POST   | `/api/ai/sprint-plan/:projectId`  | AI sprint planning suggestion      |
+
+---
+
+## 6. AI Service Module
+
+The AI Service is a dedicated module inside the backend that encapsulates all calls to the Anthropic Claude API.
+
+### Responsibilities
+- **Task Description Improvement:** Sends the raw task description and returns a polished, structured version with suggested acceptance criteria
+- **Project Summary Generation:** Aggregates task data (titles, statuses, assignees) and generates a narrative summary
+- **Sprint Planning Recommendations:** Analyzes team workload and task metadata to suggest task-to-member assignments
+
+### Design
+- All Claude API calls go through a single `claudeClient.js` wrapper for centralized error handling and token logging
+- Prompts are stored as versioned templates in `src/ai/prompts/` for easy iteration
+- AI responses are validated before being saved to the database
+- Rate limiting is applied per user on AI endpoints (max 10 AI requests/hour)
+
+```
+aiService.js
+├── improveTaskDescription(taskId)   → calls Claude → returns improved text
+├── generateProjectSummary(projectId) → aggregates tasks → calls Claude → saves + returns summary
+└── sprintPlanningAdvice(projectId, sprintParams) → analyzes members + tasks → calls Claude → returns plan
+```
+
+---
+
+## 7. Database
+
+**Technology:** PostgreSQL 15
+
+- **Connection Pooling:** `pg` (node-postgres) with a pool of 10 connections
+- **Migrations:** Raw SQL migration files managed with `node-pg-migrate`
+- **No ORM:** Direct parameterized queries to keep full control and performance transparency
+- **Indexing Strategy:**
+  - `tasks.project_id` — supports project board queries
+  - `tasks.assignee_id` — supports "my tasks" views
+  - `notifications.user_id + is_read` — supports unread notification queries
+  - `comments.task_id` — supports comment thread loading
+
+---
+
+## 8. Authentication & Security
+
+- **Auth Method:** JWT (JSON Web Tokens) with 7-day expiry, stored in `httpOnly` cookies
+- **Password Hashing:** bcrypt with salt rounds = 12
+- **Input Validation:** `express-validator` on all incoming request bodies
+- **Rate Limiting:** `express-rate-limit` — global 100 req/min per IP; AI endpoints 10 req/hour per user
+- **CORS:** Restricted to the frontend origin domain
+- **Environment Variables:** All secrets (DB credentials, Claude API key, JWT secret) stored in `.env`, never committed
+
+---
+
+## 9. Real-Time Notifications
+
+- **Technology:** Socket.IO (WebSocket with fallback)
+- **Pattern:** Server emits events to user-specific rooms (e.g., `room:user_{id}`)
+- **Events:**
+  - `notification:new` — triggers bell badge update
+  - `task:updated` — triggers board refresh for project members
+- **Scalability Note:** For multi-instance deployment, a Redis pub/sub adapter can be added to Socket.IO
+
+---
+
+## 10. Deployment & Environment
+
+### Environments
+| Environment | Purpose                   |
+|-------------|---------------------------|
+| Development | Local development (`localhost`) |
+| Production  | Deployed app              |
+
+### Infrastructure (MVP)
+- **Frontend:** Hosted on **Vercel** (static SPA, auto-deploy from GitHub)
+- **Backend:** Hosted on **Render** or **Railway** (Node.js web service)
+- **Database:** **Supabase** (managed PostgreSQL) or Railway PostgreSQL
+
+### Environment Variables
+```
+DATABASE_URL=
+JWT_SECRET=
+ANTHROPIC_API_KEY=
+CLIENT_ORIGIN=
+PORT=
+```
+
+---
+
+## 11. Development Workflow
+
+- **Repository:** `holbertonschool-ai4devs` → directory `ai_enhanced_team_hackathon`
+- **Branching:** `main` (stable) → feature branches → PRs with review
+- **Linting:** ESLint + Prettier on both frontend and backend
+- **API Testing:** Thunder Client or Postman collections committed to repo
+
+---
+
+## 12. Technology Stack Summary
+
+| Layer         | Technology                        |
+|---------------|-----------------------------------|
+| Frontend      | React 18, Vite, TailwindCSS       |
+| Backend       | Node.js, Express.js               |
+| Database      | PostgreSQL 15                     |
+| AI Provider   | Anthropic Claude API (Sonnet)     |
+| Auth          | JWT + bcrypt                      |
+| Real-Time     | Socket.IO                         |
+| Hosting (FE)  | Vercel                            |
+| Hosting (BE)  | Render / Railway                  |
+| DB Hosting    | Supabase / Railway PostgreSQL     |

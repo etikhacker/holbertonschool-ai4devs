@@ -1,89 +1,170 @@
 # Data Model
-## AI Study Plan Generator
+
+## Project: AI-Enhanced Team Collaboration Platform
+
+---
 
 ## Overview
-The data model consists of 4 entities: **User**, **StudyPlan**, **Subject**, and **Topic**. All entities are stored in a PostgreSQL relational database with foreign key constraints to ensure data integrity.
+
+The data model is designed around five core entities: **User**, **Project**, **Task**, **Comment**, and **Notification**. Relationships are defined to support multi-user collaboration, task management, and AI-generated content tracking.
 
 ---
 
-## Entity 1 – User
+## Entities
 
-Represents a registered student using the platform.
+### 1. User
 
-| Field | Type | Constraints | Description |
-|---|---|---|---|
-| `id` | UUID | PRIMARY KEY | Unique identifier for each user |
-| `name` | VARCHAR(100) | NOT NULL | Full name of the student |
-| `email` | VARCHAR(255) | NOT NULL, UNIQUE | Email address used for login |
-| `password_hash` | VARCHAR(255) | NOT NULL | Bcrypt-hashed password |
-| `created_at` | TIMESTAMP | NOT NULL | Timestamp of account creation |
-| `is_active` | BOOLEAN | DEFAULT TRUE | Whether the account is active |
+Represents a registered member of the platform.
+
+| Field         | Type         | Constraints               | Description                          |
+|---------------|--------------|---------------------------|--------------------------------------|
+| `id`          | UUID         | PRIMARY KEY                | Unique identifier                    |
+| `name`        | VARCHAR(100) | NOT NULL                  | Full display name                    |
+| `email`       | VARCHAR(255) | NOT NULL, UNIQUE          | Login email address                  |
+| `password_hash` | VARCHAR(255) | NOT NULL               | Bcrypt-hashed password               |
+| `avatar_url`  | TEXT         | NULLABLE                  | Profile picture URL                  |
+| `role`        | ENUM         | `member`, `lead`, `admin` | Platform-level role                  |
+| `created_at`  | TIMESTAMP    | DEFAULT NOW()             | Account creation timestamp           |
+| `updated_at`  | TIMESTAMP    | DEFAULT NOW()             | Last profile update                  |
 
 **Relationships:**
-- A User can have many StudyPlans.
+- A User can be a **member of many Projects** (via `ProjectMember` join table)
+- A User can **own/create many Projects**
+- A User can be **assigned many Tasks**
+- A User can **author many Comments**
 
 ---
 
-## Entity 2 – StudyPlan
+### 2. Project
 
-Represents an AI-generated study schedule created for a student.
+Represents a collaborative workspace grouping related tasks.
 
-| Field | Type | Constraints | Description |
-|---|---|---|---|
-| `id` | UUID | PRIMARY KEY | Unique identifier for each study plan |
-| `user_id` | UUID | FOREIGN KEY → User.id | The student who owns this plan |
-| `title` | VARCHAR(200) | NOT NULL | Name of the study plan (e.g., "Final Exams 2025") |
-| `daily_hours` | DECIMAL(4,1) | NOT NULL | Number of study hours available per day |
-| `start_date` | DATE | NOT NULL | Start date of the study plan |
-| `end_date` | DATE | NOT NULL | End date of the study plan |
-| `created_at` | TIMESTAMP | NOT NULL | Timestamp when the plan was generated |
+| Field         | Type         | Constraints      | Description                            |
+|---------------|--------------|------------------|----------------------------------------|
+| `id`          | UUID         | PRIMARY KEY       | Unique identifier                      |
+| `name`        | VARCHAR(150) | NOT NULL         | Project name                           |
+| `description` | TEXT         | NULLABLE         | Project overview                       |
+| `owner_id`    | UUID         | FK → User.id     | Creator/owner of the project           |
+| `deadline`    | DATE         | NULLABLE         | Target completion date                 |
+| `status`      | ENUM         | `active`, `archived`, `completed` | Current project state   |
+| `ai_summary`  | TEXT         | NULLABLE         | Latest AI-generated project summary    |
+| `ai_summary_at` | TIMESTAMP  | NULLABLE         | Timestamp of last AI summary generation|
+| `created_at`  | TIMESTAMP    | DEFAULT NOW()    | Project creation timestamp             |
+| `updated_at`  | TIMESTAMP    | DEFAULT NOW()    | Last update timestamp                  |
 
 **Relationships:**
-- A StudyPlan belongs to one User.
-- A StudyPlan has many Subjects.
+- A Project **belongs to one User** (owner)
+- A Project **has many Members** (via `ProjectMember` join table)
+- A Project **has many Tasks**
 
 ---
 
-## Entity 3 – Subject
+### 3. Task
 
-Represents a course or subject included in a study plan.
+Represents a unit of work within a project.
 
-| Field | Type | Constraints | Description |
-|---|---|---|---|
-| `id` | UUID | PRIMARY KEY | Unique identifier for each subject |
-| `study_plan_id` | UUID | FOREIGN KEY → StudyPlan.id | The study plan this subject belongs to |
-| `name` | VARCHAR(150) | NOT NULL | Name of the subject (e.g., "Mathematics") |
-| `exam_date` | DATE | NOT NULL | Date of the exam for this subject |
-| `priority` | ENUM | NOT NULL | One of: `low`, `medium`, `high` |
-| `ai_tips` | TEXT | NULLABLE | AI-generated study tips for this subject |
+| Field             | Type         | Constraints                          | Description                            |
+|-------------------|--------------|--------------------------------------|----------------------------------------|
+| `id`              | UUID         | PRIMARY KEY                           | Unique identifier                      |
+| `project_id`      | UUID         | FK → Project.id, NOT NULL            | Parent project                         |
+| `assignee_id`     | UUID         | FK → User.id, NULLABLE               | Assigned team member                   |
+| `created_by_id`   | UUID         | FK → User.id, NOT NULL               | Task creator                           |
+| `title`           | VARCHAR(200) | NOT NULL                             | Short task name                        |
+| `description`     | TEXT         | NULLABLE                             | Detailed task description              |
+| `ai_description`  | TEXT         | NULLABLE                             | AI-improved version of description     |
+| `status`          | ENUM         | `todo`, `in_progress`, `done`        | Current task status                    |
+| `priority`        | ENUM         | `low`, `medium`, `high`              | Task priority level                    |
+| `due_date`        | DATE         | NULLABLE                             | Task deadline                          |
+| `tags`            | TEXT[]       | NULLABLE                             | Skill/category tags for AI planning    |
+| `created_at`      | TIMESTAMP    | DEFAULT NOW()                        | Task creation timestamp                |
+| `updated_at`      | TIMESTAMP    | DEFAULT NOW()                        | Last modification timestamp            |
 
 **Relationships:**
-- A Subject belongs to one StudyPlan.
-- A Subject has many Topics.
+- A Task **belongs to one Project**
+- A Task **is optionally assigned to one User**
+- A Task **has many Comments**
+- A Task **has many Notifications** (triggered by status changes, assignments)
 
 ---
 
-## Entity 4 – Topic
+### 4. Comment
 
-Represents an individual study topic within a subject, assigned to a specific day.
+Represents a message left by a user on a specific task.
 
-| Field | Type | Constraints | Description |
-|---|---|---|---|
-| `id` | UUID | PRIMARY KEY | Unique identifier for each topic |
-| `subject_id` | UUID | FOREIGN KEY → Subject.id | The subject this topic belongs to |
-| `title` | VARCHAR(200) | NOT NULL | Title of the study topic |
-| `scheduled_date` | DATE | NOT NULL | The day this topic is scheduled to be studied |
-| `duration_minutes` | INTEGER | NOT NULL | Estimated time to complete this topic in minutes |
-| `is_completed` | BOOLEAN | DEFAULT FALSE | Whether the student has marked this topic as done |
-| `completed_at` | TIMESTAMP | NULLABLE | Timestamp when the topic was marked as completed |
+| Field        | Type      | Constraints           | Description                         |
+|--------------|-----------|-----------------------|-------------------------------------|
+| `id`         | UUID      | PRIMARY KEY            | Unique identifier                   |
+| `task_id`    | UUID      | FK → Task.id, NOT NULL | Parent task                         |
+| `author_id`  | UUID      | FK → User.id, NOT NULL | Comment author                      |
+| `body`       | TEXT      | NOT NULL              | Comment text content                |
+| `mentions`   | UUID[]    | NULLABLE              | Array of mentioned User IDs         |
+| `created_at` | TIMESTAMP | DEFAULT NOW()         | Comment creation timestamp          |
+| `updated_at` | TIMESTAMP | DEFAULT NOW()         | Last edit timestamp                 |
 
 **Relationships:**
-- A Topic belongs to one Subject.
+- A Comment **belongs to one Task**
+- A Comment **belongs to one User** (author)
+- A Comment **can mention many Users**
 
 ---
 
-## Entity Relationship Summary
+### 5. Notification
+
+Represents an in-app alert generated by system or user events.
+
+| Field         | Type      | Constraints              | Description                              |
+|---------------|-----------|--------------------------|------------------------------------------|
+| `id`          | UUID      | PRIMARY KEY               | Unique identifier                        |
+| `user_id`     | UUID      | FK → User.id, NOT NULL   | Recipient of the notification            |
+| `type`        | ENUM      | `assignment`, `mention`, `status_change`, `invite` | Event type |
+| `entity_type` | ENUM      | `task`, `project`, `comment` | What the notification refers to      |
+| `entity_id`   | UUID      | NOT NULL                 | ID of the referenced entity              |
+| `message`     | TEXT      | NOT NULL                 | Human-readable notification text         |
+| `is_read`     | BOOLEAN   | DEFAULT FALSE            | Whether user has seen the notification   |
+| `created_at`  | TIMESTAMP | DEFAULT NOW()            | When notification was created            |
+
+**Relationships:**
+- A Notification **belongs to one User** (recipient)
+- A Notification **references one entity** (Task, Project, or Comment)
+
+---
+
+## Join Tables
+
+### ProjectMember
+
+Links Users to Projects with a role.
+
+| Field        | Type      | Constraints                        | Description               |
+|--------------|-----------|------------------------------------|---------------------------|
+| `project_id` | UUID      | FK → Project.id, NOT NULL         | The project               |
+| `user_id`    | UUID      | FK → User.id, NOT NULL            | The member                |
+| `role`       | ENUM      | `viewer`, `contributor`, `lead`   | Role within the project   |
+| `joined_at`  | TIMESTAMP | DEFAULT NOW()                     | When user joined           |
+
+**Primary Key:** (`project_id`, `user_id`)
+
+---
+
+## Entity Relationship Diagram (Text)
 
 ```
-User ──< StudyPlan ──< Subject ──< Topic
+User ──< ProjectMember >── Project
+User ──< Task (assignee)
+User ──< Task (created_by)
+User ──< Comment
+User ──< Notification
+
+Project ──< Task
+Task ──< Comment
+Task ──< Notification (entity)
 ```
+
+---
+
+## Notes
+
+- All primary keys use **UUID v4** to support distributed generation without collision.
+- `ai_description` and `ai_summary` fields store AI-generated content alongside original user content, keeping both versions accessible.
+- `tags` on Task is a text array to support AI sprint planning by skill matching without a separate join table.
+- Soft deletes (an `is_deleted` flag) may be added in a future iteration to preserve audit history.
