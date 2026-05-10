@@ -1,7 +1,3 @@
-// bug5.java
-// Intended behavior: A singly linked list with append, delete (by value),
-// and printList methods.
-
 public class bug5 {
 
     static class Node {
@@ -31,12 +27,10 @@ public class bug5 {
 
         void delete(int value) {
             if (head == null) return;
-
             if (head.data == value) {
                 head = head.next;
                 return;
             }
-
             Node current = head;
             while (current.next != null) {
                 if (current.next.data == value) {
@@ -45,22 +39,21 @@ public class bug5 {
                 }
                 current = current.next;
             }
-            // BUG: no indication that the value was not found (silent failure)
         }
 
         void printList() {
             Node current = head;
             while (current != null) {
-                System.out.print(current.data);   // BUG: missing separator between values
-                current = current.next;            //      should print current.data + " -> "
+                System.out.print(current.data);
+                current = current.next;
             }
-            System.out.println();                  // BUG: should print "null" at end for clarity
+            System.out.println();
         }
 
         int length() {
             int count = 0;
             Node current = head;
-            while (current != null);   // BUG: infinite loop — missing `current = current.next`
+            while (current != null);
             {
                 count++;
                 current = current.next;
@@ -75,9 +68,9 @@ public class bug5 {
         list.append(2);
         list.append(3);
         list.append(4);
-        list.printList();    // expected: 1 -> 2 -> 3 -> 4 -> null
+        list.printList();
         list.delete(2);
-        list.printList();    // expected: 1 -> 3 -> 4 -> null
-        System.out.println(list.length());  // expected: 3
+        list.printList();
+        System.out.println(list.length());
     }
 }
