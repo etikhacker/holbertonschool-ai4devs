@@ -1,81 +1,121 @@
-# Data Model – EduTrack MVP
+# Data Model
 
-## Entity: User
-Represents both students and teachers. Role determines access level.
-
-| Field | Type | Constraints |
-|-------|------|-------------|
-| id | UUID | Primary Key |
-| name | VARCHAR(100) | NOT NULL |
-| email | VARCHAR(255) | UNIQUE, NOT NULL |
-| password_hash | VARCHAR(255) | NOT NULL |
-| role | ENUM('student', 'teacher') | NOT NULL |
-| language | VARCHAR(10) | DEFAULT 'en' |
-| created_at | TIMESTAMP | DEFAULT NOW() |
+## Overview
+The data model consists of 5 entities: **User**, **Class**, **Assignment**, **Grade**, and **Attendance**. All entities are stored in a relational PostgreSQL database. Relationships are enforced through foreign keys to maintain data integrity.
 
 ---
 
-## Entity: Class
-Represents a class group managed by a teacher and attended by students.
+## Entity 1 – User
 
-| Field | Type | Constraints |
-|-------|------|-------------|
-| id | UUID | Primary Key |
-| name | VARCHAR(100) | NOT NULL |
-| subject | VARCHAR(100) | NOT NULL |
-| teacher_id | UUID | Foreign Key → User.id |
-| created_at | TIMESTAMP | DEFAULT NOW() |
+Represents all registered users of the platform, including students, teachers, and admins.
 
----
+| Field | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | UUID | PRIMARY KEY | Unique identifier for each user |
+| `name` | VARCHAR(100) | NOT NULL | Full name of the user |
+| `email` | VARCHAR(255) | NOT NULL, UNIQUE | Email address used for login |
+| `password_hash` | VARCHAR(255) | NOT NULL | Bcrypt-hashed password |
+| `role` | ENUM | NOT NULL | One of: `student`, `teacher`, `admin` |
+| `created_at` | TIMESTAMP | NOT NULL | Timestamp of account creation |
+| `is_active` | BOOLEAN | DEFAULT TRUE | Whether the account is active |
 
-## Entity: Assignment
-Represents an assignment created by a teacher for a class.
-
-| Field | Type | Constraints |
-|-------|------|-------------|
-| id | UUID | Primary Key |
-| title | VARCHAR(200) | NOT NULL |
-| description | TEXT | NULLABLE |
-| due_date | TIMESTAMP | NOT NULL |
-| priority | ENUM('urgent', 'normal', 'low') | DEFAULT 'normal' |
-| class_id | UUID | Foreign Key → Class.id |
-| created_by | UUID | Foreign Key → User.id |
-| created_at | TIMESTAMP | DEFAULT NOW() |
+**Relationships:**
+- A User with role `teacher` can create many Classes.
+- A User with role `student` can enroll in many Classes.
+- A User with role `student` receives many Grades.
+- A User with role `student` has many Attendance records.
 
 ---
 
-## Entity: Grade
-Represents a grade given to a student for a specific assignment.
+## Entity 2 – Class
 
-| Field | Type | Constraints |
-|-------|------|-------------|
-| id | UUID | Primary Key |
-| student_id | UUID | Foreign Key → User.id |
-| assignment_id | UUID | Foreign Key → Assignment.id |
-| score | DECIMAL(5,2) | CHECK (score >= 0 AND score <= 100) |
-| feedback | TEXT | NULLABLE |
-| graded_at | TIMESTAMP | DEFAULT NOW() |
+Represents a course or group created by a teacher and attended by students.
 
----
+| Field | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | UUID | PRIMARY KEY | Unique identifier for each class |
+| `name` | VARCHAR(150) | NOT NULL | Name of the class (e.g., "Math 101") |
+| `description` | TEXT | NULLABLE | Optional description of the class content |
+| `teacher_id` | UUID | FOREIGN KEY → User.id | The teacher who owns this class |
+| `created_at` | TIMESTAMP | NOT NULL | Timestamp of class creation |
 
-## Entity: Attendance
-Represents the attendance record of a student for a class session.
-
-| Field | Type | Constraints |
-|-------|------|-------------|
-| id | UUID | Primary Key |
-| student_id | UUID | Foreign Key → User.id |
-| class_id | UUID | Foreign Key → Class.id |
-| date | DATE | NOT NULL |
-| status | ENUM('present', 'absent', 'late') | NOT NULL |
-| recorded_at | TIMESTAMP | DEFAULT NOW() |
+**Relationships:**
+- A Class belongs to one User (teacher).
+- A Class has many Assignments.
+- A Class has many Attendance records.
+- A Class has many enrolled Users (students) via a join table `class_enrollments`.
 
 ---
 
-## Relationships
-- One **User (teacher)** has many **Classes**
-- One **Class** has many **Assignments**
-- One **Class** has many **Users (students)** via enrollment (join table)
-- One **Assignment** has many **Grades**
-- One **User (student)** has many **Grades**
-- One **User (student)** has many **Attendance** records
+## Entity 3 – Assignment
+
+Represents a task or piece of work assigned to students within a class.
+
+| Field | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | UUID | PRIMARY KEY | Unique identifier for each assignment |
+| `class_id` | UUID | FOREIGN KEY → Class.id | The class this assignment belongs to |
+| `title` | VARCHAR(200) | NOT NULL | Title of the assignment |
+| `description` | TEXT | NULLABLE | Detailed instructions for the assignment |
+| `due_date` | DATE | NOT NULL | The deadline for submission |
+| `created_at` | TIMESTAMP | NOT NULL | Timestamp when the assignment was created |
+
+**Relationships:**
+- An Assignment belongs to one Class.
+- An Assignment has many Grades (one per enrolled student).
+
+---
+
+## Entity 4 – Grade
+
+Represents the score given to a student for a specific assignment.
+
+| Field | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | UUID | PRIMARY KEY | Unique identifier for each grade record |
+| `assignment_id` | UUID | FOREIGN KEY → Assignment.id | The assignment being graded |
+| `student_id` | UUID | FOREIGN KEY → User.id | The student receiving the grade |
+| `score` | DECIMAL(5,2) | NOT NULL | Numeric score (e.g., 85.50) |
+| `feedback` | TEXT | NULLABLE | Optional written feedback from the teacher |
+| `graded_at` | TIMESTAMP | NOT NULL | Timestamp when the grade was recorded |
+
+**Constraints:**
+- The combination of `assignment_id` and `student_id` must be unique (one grade per student per assignment).
+
+**Relationships:**
+- A Grade belongs to one Assignment.
+- A Grade belongs to one User (student).
+
+---
+
+## Entity 5 – Attendance
+
+Represents the attendance status of a student for a specific class session.
+
+| Field | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | UUID | PRIMARY KEY | Unique identifier for each attendance record |
+| `class_id` | UUID | FOREIGN KEY → Class.id | The class session being recorded |
+| `student_id` | UUID | FOREIGN KEY → User.id | The student whose attendance is recorded |
+| `session_date` | DATE | NOT NULL | The date of the class session |
+| `status` | ENUM | NOT NULL | One of: `present`, `absent`, `late` |
+| `recorded_at` | TIMESTAMP | NOT NULL | Timestamp when the record was created |
+
+**Constraints:**
+- The combination of `class_id`, `student_id`, and `session_date` must be unique (one attendance record per student per session).
+
+**Relationships:**
+- An Attendance record belongs to one Class.
+- An Attendance record belongs to one User (student).
+
+---
+
+## Entity Relationship Summary
+
+```
+User (teacher) ──< Class ──< Assignment ──< Grade >── User (student)
+                      │
+                      └──< Attendance >── User (student)
+
+User (student) ──< class_enrollments >── Class
+```

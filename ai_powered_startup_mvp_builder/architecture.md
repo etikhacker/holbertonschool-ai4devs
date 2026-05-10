@@ -1,56 +1,84 @@
-# System Architecture – EduTrack MVP
+# System Architecture
 
 ## Overview
-EduTrack uses a client-server architecture with a React frontend, a Node.js/Express REST API backend, a PostgreSQL database, and an external AI service for study plan generation.
+This document describes the high-level architecture of the AI-Powered Student Management MVP. The system follows a three-tier client-server architecture consisting of a frontend client, a backend REST API, and a relational database.
 
-## High-Level Diagram
+---
+
+## System Diagram
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                    CLIENT LAYER                     │
-│         React Web App (mobile-responsive)           │
-│   Student Dashboard │ Teacher Dashboard │ Settings  │
-└────────────────────────┬────────────────────────────┘
-                         │ HTTPS / REST API
-┌────────────────────────▼────────────────────────────┐
-│                   API LAYER                         │
-│            Node.js + Express REST API               │
-│  /auth  │ /assignments │ /grades │ /attendance      │
-│         │ /students    │ /classes│ /study-plan      │
-└──────┬──────────────────────┬───────────────────────┘
-       │ SQL queries          │ HTTP POST
-┌──────▼──────┐      ┌────────▼────────┐
-│  PostgreSQL │      │  OpenAI / AI    │
-│  Database   │      │  Study Plan API │
-│             │      │                 │
-│ Users       │      │ Analyzes grades │
-│ Assignments │      │ Returns weekly  │
-│ Grades      │      │ study plan JSON │
-│ Attendance  │      └─────────────────┘
-│ Classes     │
-└─────────────┘
+┌─────────────────────────────────────────────────────────┐
+│                        CLIENT LAYER                      │
+│                                                         │
+│   ┌─────────────────┐        ┌──────────────────────┐  │
+│   │   Web Browser   │        │    Mobile Browser    │  │
+│   │  (React / HTML) │        │   (Responsive UI)    │  │
+│   └────────┬────────┘        └──────────┬───────────┘  │
+│            │                            │               │
+└────────────┼────────────────────────────┼───────────────┘
+             │         HTTPS              │
+             ▼                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                      API LAYER                           │
+│                                                         │
+│   ┌─────────────────────────────────────────────────┐  │
+│   │              REST API (Node.js / Express)        │  │
+│   │                                                  │  │
+│   │  ┌───────────┐  ┌───────────┐  ┌─────────────┐ │  │
+│   │  │   Auth    │  │  Classes  │  │ Assignments │ │  │
+│   │  │  Module   │  │  Module   │  │   Module    │ │  │
+│   │  └───────────┘  └───────────┘  └─────────────┘ │  │
+│   │                                                  │  │
+│   │  ┌───────────┐  ┌───────────┐                   │  │
+│   │  │  Grades   │  │Attendance │                   │  │
+│   │  │  Module   │  │  Module   │                   │  │
+│   │  └───────────┘  └───────────┘                   │  │
+│   └─────────────────────────────────────────────────┘  │
+│                                                         │
+└────────────────────────────┬────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────┐
+│                     DATA LAYER                           │
+│                                                         │
+│   ┌──────────────────────────────────────────────────┐ │
+│   │           Relational Database (PostgreSQL)        │ │
+│   │                                                   │ │
+│   │   Users │ Classes │ Assignments │ Grades │        │ │
+│   │                          Attendance               │ │
+│   └──────────────────────────────────────────────────┘ │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
 ```
 
-## Components
+---
 
-### Frontend (React)
-- Student dashboard with assignment list, grade chart, and GPA display
-- Teacher dashboard with class roster, attendance tracker, and grade entry
-- Settings screen for language and theme preferences
-- Communicates with backend via REST API using JWT tokens
+## Component Descriptions
 
-### Backend (Node.js + Express)
-- RESTful API with versioned endpoints under `/api/v1/`
-- JWT-based authentication middleware for all protected routes
-- Business logic for GPA calculation, attendance summaries, and report generation
-- Proxies AI study plan requests to the external AI service
+### Client Layer
+- **Web Browser**: The primary user interface built with React. Students, teachers, and admins interact with the system through this interface.
+- **Mobile Browser**: A responsive version of the web UI accessible from mobile devices without requiring a native app.
 
-### Database (PostgreSQL)
-- Stores all users, assignments, grades, attendance records, and class data
-- Row-level security enforced at the application layer
-- Indexed on student_id, class_id, and due_date for query performance
+### API Layer
+- **REST API (Node.js / Express)**: Handles all business logic and serves data to the client. Organized into modules by feature area.
+- **Auth Module**: Manages user registration, login, logout, and JWT token validation.
+- **Classes Module**: Handles creation, retrieval, update, and deletion of classes.
+- **Assignments Module**: Manages assignment creation, listing, and deadline tracking per class.
+- **Grades Module**: Records and retrieves grades per student per assignment.
+- **Attendance Module**: Records and retrieves attendance status per student per class session.
 
-### AI Service (External)
-- Receives student grade data and returns a structured weekly study plan
-- Called only when a student has at least 3 graded assignments
-- Response cached for 24 hours to minimize API costs
+### Data Layer
+- **PostgreSQL Database**: Stores all persistent data including users, classes, assignments, grades, and attendance records. Relational structure ensures referential integrity across all entities.
+
+---
+
+## Key Design Decisions
+
+| Decision | Choice | Reason |
+|---|---|---|
+| API style | REST | Simple, widely understood, easy to test |
+| Authentication | JWT tokens | Stateless, scalable, no server-side session storage |
+| Database | PostgreSQL | Strong relational support, ACID compliance |
+| Frontend | React | Component-based, easy to scale UI |
+| Hosting | Cloud (e.g., Render / Railway) | Free tiers available for MVP deployment |
