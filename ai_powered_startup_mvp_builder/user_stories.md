@@ -28,4 +28,4 @@ As a teacher, I want to mark student attendance as present, absent, or late for 
 As a teacher, I want to manage multiple classes from a single account so that I can handle all my teaching responsibilities in one place.
 
 ## User Story 10
-As a student, I want to switch the interface language between English and Azerbaijani so that I can use the platform comfortably in my preferred language.
+As a student, I want to change the interface language to Azerbaijani so that I can use the platform comfortably in my native language.
